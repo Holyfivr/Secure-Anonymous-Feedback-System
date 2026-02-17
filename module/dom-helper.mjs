@@ -16,3 +16,17 @@ export function createElement(parent, type, classList = [], content) {
     parent.appendChild(element);
     return element;
 }
+
+/*
+This function creates an input element,
+defines its type, id, and placeholder,
+and finally appends it to parent element
+*/
+export function createInput(parent, type, id, placeholder) {
+    const input = document.createElement("input");
+    input.type = type;
+    input.id = id;
+    input.placeholder = placeholder;
+    parent.appendChild(input);
+    return input;
+}
