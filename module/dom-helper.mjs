@@ -22,11 +22,14 @@ This function creates an input element,
 defines its type, id, and placeholder,
 and finally appends it to parent element
 */
-export function createInput(parent, type, id, placeholder) {
+export function createInput(parent, type, id, placeholder, required) {
     const input = document.createElement("input");
     input.type = type;
     input.id = id;
     input.placeholder = placeholder;
+    if (required) {
+        input.required = true;
+    }
     parent.appendChild(input);
     return input;
 }

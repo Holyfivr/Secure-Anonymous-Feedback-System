@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+    function isSuperadmin() {
+      return hasRole("superadmin");
+    }
+    function isSchoolAdmin(schoolId) {
+      return hasRole("schooladmin") && request.auth.token.schoolId == schoolId;
+    }
+    function isClassAdmin(schoolId, classId) {
+      return hasRole("classadmin")
+        && request.auth.token.schoolId == schoolId
+        && request.auth.token.classId == classId;
+    }
+
+    // --- Schools ---
+    match /schools/{schoolId} {
+      allow read: if isSuperadmin() || isSchoolAdmin(schoolId);
+      allow write: if false; // Only via Cloud Functions
+
+      // --- Classes ---
+      match /classes/{classId} {
+        allow read: if isSuperadmin()
+                    || isSchoolAdmin(schoolId)
+                    || isClassAdmin(schoolId, classId);
+        allow write: if false; // Only via Cloud Functions
+
+        // --- Messages ---
+        match /messages/{messageId} {
+          allow read: if isClassAdmin(schoolId, classId);
+          allow create: if false; // Posting goes through Cloud Function
+          allow delete: if isClassAdmin(schoolId, classId);
+          allow update: if false;
+        }
+      }
+    }
+  }
+}
