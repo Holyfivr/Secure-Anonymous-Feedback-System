@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, signInWithEmailAndPassword, signOut } from "./firebase-config.mjs";
+import { auth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
 
@@ -32,6 +32,10 @@ function renderLoginForm() {
 
     const btn = createElement(form, "button", [], "Log in");
     btn.type = "submit";
+
+    const forgotLink = createElement(card, "p", ["forgot-password"]);
+    forgotLink.innerHTML = `<a href="#" id="forgot-password-link">Forgot password?</a>`;
+    forgotLink.querySelector("a").addEventListener("click", handleForgotPassword);
 }
 
 async function handleLogin(e) {
@@ -62,5 +66,26 @@ async function handleLogin(e) {
     } catch (err) {
         errorEl.textContent = "Wrong email or password.";
     }
-    console.log("Login attempt:", email);
+}
+
+async function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value;
+    const errorEl = document.getElementById("login-error");
+
+    if (!email) {
+        errorEl.textContent = "Enter your email first.";
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        errorEl.classList.remove("error-text");
+        errorEl.classList.add("success-text");
+        errorEl.textContent = "Password reset email sent! Check your inbox or spam folder.";
+    } catch (err) {
+        errorEl.classList.remove("success-text");
+        errorEl.classList.add("error-text");
+        errorEl.textContent = "Could not send reset email. Check the address.";
+    }
 }

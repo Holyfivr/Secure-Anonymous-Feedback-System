@@ -30,11 +30,12 @@ button:hover {
     opacity: 0.9;
 }
 
-input {
+input, select, textarea {
     padding: 0.6rem;
     border: 1px solid var(--primary-color);
     border-radius: 4px;
     font-size: 1rem;
+    font-family: inherit;
 }
 
 /* Reusable layout */
@@ -175,5 +176,20 @@ input {
 }
 .badge-inactive {
     background: #c0392b;
+}
+
+/* Feedback */
+.feedback-card {
+    max-width: 500px;
+}
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+.char-counter {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.3rem;
 }
 

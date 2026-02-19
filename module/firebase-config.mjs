@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
@@ -23,7 +23,7 @@ export const db = getFirestore(app);
 
 // Re-export what the app needs
 export {
-    signInWithEmailAndPassword, signOut, onAuthStateChanged,
+    signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
     httpsCallable,
     collection, getDocs, query, where,
 };

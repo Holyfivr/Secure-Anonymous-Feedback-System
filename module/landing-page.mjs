@@ -11,6 +11,7 @@ export function renderNavBar(parent) {
     createElement(nav, "div", ["logo"], "S A F S");
     createElement(nav, "div", ["nav-links"], `
         <a href="#/home">Home</a>
+        <a href="#/feedback">Send feedback</a>
         <a href="#/login">Log in</a>
     `);
     return nav;

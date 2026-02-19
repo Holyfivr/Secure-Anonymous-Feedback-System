@@ -3,3 +3,16 @@
     width: 100%;
     margin-top: 0.5rem;
 }
+
+.forgot-password {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+}
+.forgot-password a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.forgot-password a:hover {
+    text-decoration: underline;
+}
