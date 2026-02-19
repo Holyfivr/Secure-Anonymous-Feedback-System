@@ -1,5 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
+import { auth, signInWithEmailAndPassword, signOut } from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
 
@@ -33,7 +34,7 @@ function renderLoginForm() {
     btn.type = "submit";
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
@@ -46,10 +47,20 @@ function handleLogin(e) {
 
     errorEl.textContent = "";
 
-    // TODO: Firebase Auth – signInWithEmailAndPassword
-    // After login, read custom claims to determine role and route:
-    //   superadmin  → #/superadmin
-    //   schooladmin → #/schooladmin
-    //   classadmin  → #/classadmin
+    try {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await credential.user.getIdTokenResult(true);
+        const role = token.claims.role;
+
+        if (role === "superadmin") window.location.hash = "#/superadmin";
+        else if (role === "schooladmin") window.location.hash = "#/schooladmin";
+        else if (role === "classadmin") window.location.hash = "#/classadmin";
+        else {
+            errorEl.textContent = "No role assigned to this account.";
+            await signOut(auth);
+        }
+    } catch (err) {
+        errorEl.textContent = "Wrong email or password.";
+    }
     console.log("Login attempt:", email);
 }

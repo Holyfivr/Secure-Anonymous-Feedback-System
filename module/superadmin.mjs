@@ -1,5 +1,7 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
+import { auth, functions, db, signOut, httpsCallable, collection, getDocs }
+    from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
 
@@ -16,8 +18,8 @@ function renderDashboard() {
     const header = createElement(wrapper, "div", ["dashboard-header"]);
     createElement(header, "h2", [], "Superadmin");
     const logoutBtn = createElement(header, "button", ["btn-danger"], "Log out");
-    logoutBtn.addEventListener("click", () => {
-        // TODO: Firebase sign out
+    logoutBtn.addEventListener("click", async () => {
+        await signOut(auth);
         window.location.hash = "#/login";
     });
 
@@ -51,7 +53,7 @@ function renderDashboard() {
     loadSchools(schoolList);
 }
 
-function handleCreateSchool(e) {
+async function handleCreateSchool(e) {
     e.preventDefault();
     const name = document.getElementById("school-name").value;
     const email = document.getElementById("school-admin-email").value;
@@ -63,14 +65,54 @@ function handleCreateSchool(e) {
     }
     errorEl.textContent = "";
 
-    // TODO: Call Function to create school + school admin account
-    console.log("Create school:", name, email);
+    try {
+        const tempPassword = crypto.randomUUID().slice(0, 12);
+        const createSchool = httpsCallable(functions, "createSchool");
+        const result = await createSchool({
+            schoolName: name,
+            adminEmail: email,
+            adminPassword: tempPassword,
+        });
+
+        // Show credentials to superadmin
+        const successEl = document.getElementById("create-school-error");
+        successEl.classList.remove("error-text");
+        successEl.classList.add("success-text");
+        successEl.innerHTML =
+            `<strong>School created!</strong><br>` +
+            `Email: <code>${email}</code><br>` +
+            `Temporary password: <code>${tempPassword}</code><br>` +
+            `<em>Save this — it won't be shown again.</em>`;
+
+        // Refresh list
+        const schoolList = document.getElementById("school-list");
+        loadSchools(schoolList);
+        e.target.reset();
+    } catch (err) {
+        const errorEl2 = document.getElementById("create-school-error");
+        errorEl2.classList.remove("success-text");
+        errorEl2.classList.add("error-text");
+        errorEl2.textContent = err.message || "Failed to create school.";
+    }
 }
 
-function loadSchools(container) {
-    // TODO: Fetch schools from Firestore
-    // For now, show placeholder
+async function loadSchools(container) {
     container.innerHTML = "";
-    const placeholder = createElement(container, "p", ["muted"], "No schools yet.");
-    placeholder.style.fontStyle = "italic";
+    try {
+        const snapshot = await getDocs(collection(db, "schools"));
+        if (snapshot.empty) {
+            const placeholder = createElement(container, "p", ["muted"], "No schools yet.");
+            placeholder.style.fontStyle = "italic";
+            return;
+        }
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = createElement(container, "div", ["item-row"]);
+            createElement(row, "span", [], data.name);
+            const badge = createElement(row, "span", ["badge"], data.active ? "Active" : "Inactive");
+            if (!data.active) badge.classList.add("badge-inactive");
+        });
+    } catch (err) {
+        createElement(container, "p", ["error-text"], "Failed to load schools.");
+    }
 }
