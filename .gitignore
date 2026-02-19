@@ -1,0 +1,12 @@
+Firebase-setup.md
+Firebase-setup
+sdk
+sdk.js
+
+# Firebase
+functions/node_modules/
+**/serviceAccountKey*.json
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+functions/set-superadmin.js

@@ -1,6 +1,7 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 const root = document.getElementById("root");
+const required = true;
 
 export function renderLoginPage() {
     root.innerHTML = "";
@@ -9,8 +10,8 @@ export function renderLoginPage() {
 }
 
 function renderLoginForm() {
-    const wrapper = createElement(root, "div", ["login-wrapper"]);
-    const card = createElement(wrapper, "div", ["login-card"]);
+    const wrapper = createElement(root, "div", ["page-wrapper"]);
+    const card = createElement(wrapper, "div", ["card"]);
 
     createElement(card, "h2", [], "Log in");
 
@@ -19,16 +20,16 @@ function renderLoginForm() {
 
     const emailDiv = createElement(form, "div", ["form-group"]);
     createElement(emailDiv, "label", [], "Email");
-    createInput(emailDiv, "email", "login-email", "name@domain.com");
+    createInput(emailDiv, "email", "login-email", "name@domain.com", required);
 
     const passDiv = createElement(form, "div", ["form-group"]);
     createElement(passDiv, "label", [], "Password");
-    createInput(passDiv, "password", "login-password", "••••••••••••");
+    createInput(passDiv, "password", "login-password", "••••••••••••", required);
 
-    const errorMsg = createElement(form, "div", ["login-error"]);
+    const errorMsg = createElement(form, "div", ["error-text"]);
     errorMsg.id = "login-error";
 
-    const btn = createElement(form, "button", ["login-btn"], "Log in");
+    const btn = createElement(form, "button", [], "Log in");
     btn.type = "submit";
 }
 

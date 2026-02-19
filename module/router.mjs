@@ -1,9 +1,11 @@
 import { renderLandingPage } from "./landing-page.mjs";
 import { renderLoginPage } from "./login.mjs";
+import { renderSuperadminPage } from "./superadmin.mjs";
 
 const routes = {
     "/home": renderLandingPage,
     "/login": renderLoginPage,
+    "/superadmin": renderSuperadminPage,
 };
 
 function navigate() {
