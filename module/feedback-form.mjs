@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { functions, db, httpsCallable }
+import { functions, httpsCallable }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -106,18 +106,12 @@ export async function renderFeedbackForm(schoolId, classId) {
     const wrapper = createElement(root, "div", ["page-wrapper"]);
     const card = createElement(wrapper, "div", ["card", "feedback-card"]);
 
-    // Load class name
+    // Load class name via Cloud Function (anonymous users can't read Firestore directly)
     let className = "your class";
     try {
-        const { doc, getDoc } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
-        const classDoc = await getDoc(
-            doc(db, "schools", schoolId, "classes", classId)
-        );
-        if (classDoc.exists() && classDoc.data().name) {
-            className = classDoc.data().name;
-        }
+        const getClassName = httpsCallable(functions, "getClassName");
+        const result = await getClassName({ schoolId, classId });
+        className = result.data.name;
     } catch (err) {
         // fallback to generic name
     }

@@ -21,6 +21,21 @@ export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const db = getFirestore(app);
 
+// Auth guard — returns token if role matches, otherwise redirects to login
+export async function requireAuth(role) {
+    const user = auth.currentUser;
+    if (!user) {
+        window.location.hash = "#/login";
+        return null;
+    }
+    const token = await user.getIdTokenResult();
+    if (token.claims.role !== role) {
+        window.location.hash = "#/login";
+        return null;
+    }
+    return token;
+}
+
 // Re-export what the app needs
 export {
     signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,

@@ -1,19 +1,18 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, functions, db, signOut, httpsCallable, collection, getDocs }
+import { auth, functions, db, signOut, httpsCallable, collection, getDocs, requireAuth }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
 const required = true;
 
 export async function renderSchooladminPage() {
+    const token = await requireAuth("schooladmin");
+    if (!token) return;
+
     root.innerHTML = "";
     renderNavBar(root);
-
-    const token = await auth.currentUser.getIdTokenResult();
-    const schoolId = token.claims.schoolId;
-
-    renderDashboard(schoolId);
+    renderDashboard(token.claims.schoolId);
 }
 
 function renderDashboard(schoolId) {
@@ -136,14 +135,31 @@ async function loadClasses(container, schoolId) {
             createElement(row, "span", [], data.name);
 
             const actions = createElement(row, "div", ["item-actions"]);
-            const badge = createElement(actions, "span", ["badge"], data.active ? "Active" : "Inactive");
-            if (!data.active) badge.classList.add("badge-inactive");
 
-            const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
-            deleteBtn.addEventListener("click", () => handleDeleteClass(docSnap.id, data.name, schoolId));
+            // Toggle active/inactive button
+            const toggleBtn = createElement(actions, "button", ["btn-small", data.active ? "btn-active" : "btn-inactive"], data.active ? "Active" : "Inactive");
+            toggleBtn.addEventListener("click", () => handleToggleClass(docSnap.id, schoolId));
+
+            // Delete button — only for inactive classes
+            if (!data.active) {
+                const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+                deleteBtn.addEventListener("click", () => handleDeleteClass(docSnap.id, data.name, schoolId));
+            }
         });
     } catch (err) {
         createElement(container, "p", ["error-text"], "Failed to load classes.");
+    }
+}
+
+async function handleToggleClass(classId, schoolId) {
+    try {
+        const toggleActive = httpsCallable(functions, "toggleActive");
+        await toggleActive({ schoolId, classId });
+
+        const classList = document.getElementById("class-list");
+        loadClasses(classList, schoolId);
+    } catch (err) {
+        alert(err.message || "Failed to toggle class.");
     }
 }
 
