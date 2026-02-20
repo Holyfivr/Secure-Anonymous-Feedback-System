@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { functions, db, httpsCallable, collection, getDocs }
+import { functions, db, httpsCallable }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -43,16 +43,14 @@ export async function renderFeedbackPage() {
 
     // Load schools
     try {
-        const snapshot = await getDocs(collection(db, "schools"));
+        const listSchools = httpsCallable(functions, "listSchools");
+        const result = await listSchools();
         schoolSelect.innerHTML = `<option value="">Select school...</option>`;
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.active) {
-                const option = document.createElement("option");
-                option.value = doc.id;
-                option.textContent = data.name;
-                schoolSelect.appendChild(option);
-            }
+        result.data.forEach((school) => {
+            const option = document.createElement("option");
+            option.value = school.id;
+            option.textContent = school.name;
+            schoolSelect.appendChild(option);
         });
     } catch (err) {
         schoolSelect.innerHTML = `<option value="">Could not load schools</option>`;
@@ -70,18 +68,14 @@ export async function renderFeedbackPage() {
         }
 
         try {
-            const snapshot = await getDocs(
-                collection(db, "schools", schoolId, "classes")
-            );
+            const listClasses = httpsCallable(functions, "listClasses");
+            const result = await listClasses({ schoolId });
             classSelect.innerHTML = `<option value="">Select class...</option>`;
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.active) {
-                    const option = document.createElement("option");
-                    option.value = doc.id;
-                    option.textContent = data.name;
-                    classSelect.appendChild(option);
-                }
+            result.data.forEach((cls) => {
+                const option = document.createElement("option");
+                option.value = cls.id;
+                option.textContent = cls.name;
+                classSelect.appendChild(option);
             });
             classSelect.disabled = false;
         } catch (err) {
