@@ -277,6 +277,72 @@ exports.deleteClass = onCall(async (request) => {
 });
 
 // ===========================================
+// DELETE SCHOOL (superadmin only)
+// ===========================================
+exports.deleteSchool = onCall(async (request) => {
+  requireRole(request, "superadmin");
+
+  const {schoolId} = request.data;
+  if (!schoolId) {
+    throw new HttpsError("invalid-argument", "Missing schoolId.");
+  }
+
+  const schoolRef = db.collection("schools").doc(schoolId);
+  const schoolDoc = await schoolRef.get();
+  if (!schoolDoc.exists) {
+    throw new HttpsError("not-found", "School not found.");
+  }
+
+  // Delete all classes and their messages/users
+  const classesSnapshot = await schoolRef.collection("classes").get();
+  for (const classDoc of classesSnapshot.docs) {
+    // Delete messages in batches
+    const messagesRef = classDoc.ref.collection("messages");
+    let msgSnapshot = await messagesRef.limit(500).get();
+    while (!msgSnapshot.empty) {
+      const batch = db.batch();
+      msgSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      msgSnapshot = await messagesRef.limit(500).get();
+    }
+
+    // Delete class admin user
+    const adminUid = classDoc.data().adminUid;
+    if (adminUid) {
+      try {
+        await getAuth().deleteUser(adminUid);
+      } catch (err) {
+        // User may already be deleted
+      }
+    }
+
+    // Delete class document
+    await classDoc.ref.delete();
+  }
+
+  // Delete school document
+  await schoolRef.delete();
+
+  return {status: "deleted"};
+});
+
+// ===========================================
+// LIST CLASS NAMES (superadmin, for overview)
+// ===========================================
+exports.listClassNames = onCall(async (request) => {
+  requireRole(request, "superadmin");
+
+  const {schoolId} = request.data;
+  if (!schoolId) {
+    throw new HttpsError("invalid-argument", "Missing schoolId.");
+  }
+
+  const snapshot = await db.collection("schools").doc(schoolId)
+      .collection("classes").get();
+  return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name, active: doc.data().active}));
+});
+
+// ===========================================
 // TOGGLE SCHOOL/CLASS ACTIVE
 // - Superadmin: can toggle any school or class
 // - School admin: can toggle own classes only
