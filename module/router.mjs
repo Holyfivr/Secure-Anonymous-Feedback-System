@@ -1,12 +1,14 @@
 import { renderLandingPage } from "./landing-page.mjs";
 import { renderLoginPage } from "./login.mjs";
 import { renderSuperadminPage } from "./superadmin.mjs";
+import { renderSchooladminPage } from "./schooladmin.mjs";
 import { renderFeedbackPage, renderFeedbackForm } from "./feedback-form.mjs";
 
 const routes = {
     "/home": renderLandingPage,
     "/login": renderLoginPage,
     "/superadmin": renderSuperadminPage,
+    "/schooladmin": renderSchooladminPage,
     "/feedback": renderFeedbackPage,
 };
 
