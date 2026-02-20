@@ -178,6 +178,16 @@ input, select, textarea {
     background: #c0392b;
 }
 
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.btn-small {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+}
+
 /* Feedback */
 .feedback-card {
     max-width: 500px;

@@ -92,7 +92,15 @@ async function handleCreateSchool(e) {
         const errorEl2 = document.getElementById("create-school-error");
         errorEl2.classList.remove("success-text");
         errorEl2.classList.add("error-text");
-        errorEl2.textContent = err.message || "Failed to create school.";
+
+        const code = err.code?.replace("functions/", "");
+        const messages = {
+            "already-exists": "That email is already in use.",
+            "permission-denied": "You don't have permission to do this.",
+            "unauthenticated": "You must be logged in.",
+            "invalid-argument": err.message,
+        };
+        errorEl2.textContent = messages[code] || err.message || "Something went wrong. Try again.";
     }
 }
 

@@ -34,10 +34,24 @@ exports.createSchool = onCall(async (request) => {
   }
 
   // Create the school admin user
-  const userRecord = await getAuth().createUser({
-    email: adminEmail,
-    password: adminPassword,
-  });
+  let userRecord;
+  try {
+    userRecord = await getAuth().createUser({
+      email: adminEmail,
+      password: adminPassword,
+    });
+  } catch (err) {
+    if (err.code === "auth/email-already-exists") {
+      throw new HttpsError("already-exists", "That email is already in use.");
+    }
+    if (err.code === "auth/invalid-email") {
+      throw new HttpsError("invalid-argument", "Invalid email address.");
+    }
+    if (err.code === "auth/invalid-password") {
+      throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+    }
+    throw new HttpsError("internal", "Could not create user: " + err.message);
+  }
 
   // Create school document
   const schoolRef = db.collection("schools").doc();
@@ -74,10 +88,24 @@ exports.createClass = onCall(async (request) => {
   const postPasswordHash = crypto.createHash("sha256").update(postPassword).digest("hex");
 
   // Create class admin user
-  const userRecord = await getAuth().createUser({
-    email: adminEmail,
-    password: adminPassword,
-  });
+  let userRecord;
+  try {
+    userRecord = await getAuth().createUser({
+      email: adminEmail,
+      password: adminPassword,
+    });
+  } catch (err) {
+    if (err.code === "auth/email-already-exists") {
+      throw new HttpsError("already-exists", "That email is already in use.");
+    }
+    if (err.code === "auth/invalid-email") {
+      throw new HttpsError("invalid-argument", "Invalid email address.");
+    }
+    if (err.code === "auth/invalid-password") {
+      throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+    }
+    throw new HttpsError("internal", "Could not create user: " + err.message);
+  }
 
   // Create class document
   const classRef = db.collection("schools").doc(schoolId).collection("classes").doc();
@@ -85,6 +113,7 @@ exports.createClass = onCall(async (request) => {
     name: className,
     active: true,
     postPasswordHash: postPasswordHash,
+    adminUid: userRecord.uid,
     createdAt: FieldValue.serverTimestamp(),
   });
 
@@ -143,6 +172,48 @@ exports.postMessage = onCall(async (request) => {
   });
 
   return {status: "ok"};
+});
+
+// ===========================================
+// DELETE CLASS (school admin only)
+// ===========================================
+exports.deleteClass = onCall(async (request) => {
+  requireRole(request, "schooladmin");
+
+  const schoolId = request.auth.token.schoolId;
+  const {classId} = request.data;
+
+  if (!classId) {
+    throw new HttpsError("invalid-argument", "Missing classId.");
+  }
+
+  const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
+  const classDoc = await classRef.get();
+
+  if (!classDoc.exists) {
+    throw new HttpsError("not-found", "Class not found.");
+  }
+
+  // Delete all messages in subcollection
+  const messages = await classRef.collection("messages").get();
+  const batch = db.batch();
+  messages.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+
+  // Delete class admin user if stored
+  const adminUid = classDoc.data().adminUid;
+  if (adminUid) {
+    try {
+      await getAuth().deleteUser(adminUid);
+    } catch (err) {
+      // User might already be deleted
+    }
+  }
+
+  // Delete class document
+  await classRef.delete();
+
+  return {status: "deleted"};
 });
 
 // ===========================================
