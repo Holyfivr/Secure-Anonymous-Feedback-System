@@ -118,12 +118,83 @@ async function loadSchools(container) {
         }
         snapshot.forEach((doc) => {
             const data = doc.data();
-            const row = createElement(container, "div", ["item-row"]);
+            const item = createElement(container, "div", ["school-item"]);
+
+            const row = createElement(item, "div", ["item-row"]);
             createElement(row, "span", [], data.name);
-            const badge = createElement(row, "span", ["badge"], data.active ? "Active" : "Inactive");
-            if (!data.active) badge.classList.add("badge-inactive");
+
+            const actions = createElement(row, "div", ["item-actions"]);
+
+            // Toggle active/inactive
+            const toggleBtn = createElement(actions, "button", ["btn-small", data.active ? "btn-active" : "btn-inactive"], data.active ? "Active" : "Inactive");
+            toggleBtn.addEventListener("click", () => handleToggleSchool(doc.id, container));
+
+            // View classes
+            const viewBtn = createElement(actions, "button", ["btn-small"], "View classes");
+            viewBtn.addEventListener("click", () => handleViewClasses(doc.id, item, viewBtn));
+
+            // Delete (only inactive)
+            if (!data.active) {
+                const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+                deleteBtn.addEventListener("click", () => handleDeleteSchool(doc.id, data.name, container));
+            }
         });
     } catch (err) {
         createElement(container, "p", ["error-text"], "Failed to load schools.");
+    }
+}
+
+async function handleToggleSchool(schoolId, container) {
+    try {
+        const toggleActive = httpsCallable(functions, "toggleActive");
+        await toggleActive({ schoolId });
+        loadSchools(container);
+    } catch (err) {
+        alert(err.message || "Failed to toggle school.");
+    }
+}
+
+async function handleDeleteSchool(schoolId, schoolName, container) {
+    if (!confirm(`Delete "${schoolName}" and ALL its classes and messages? This cannot be undone.`)) return;
+
+    try {
+        const deleteSchool = httpsCallable(functions, "deleteSchool");
+        await deleteSchool({ schoolId });
+        loadSchools(container);
+    } catch (err) {
+        alert(err.message || "Failed to delete school.");
+    }
+}
+
+async function handleViewClasses(schoolId, schoolItem, viewBtn) {
+    // Toggle: if already showing, remove
+    const existing = schoolItem.querySelector(".sub-list");
+    if (existing) {
+        existing.remove();
+        viewBtn.textContent = "View classes";
+        return;
+    }
+
+    viewBtn.textContent = "Hide classes";
+    const subList = createElement(schoolItem, "div", ["sub-list"]);
+
+    try {
+        const listClassNames = httpsCallable(functions, "listClassNames");
+        const result = await listClassNames({ schoolId });
+        const classes = result.data;
+
+        if (classes.length === 0) {
+            const p = createElement(subList, "p", ["muted"], "No classes.");
+            p.style.fontStyle = "italic";
+            return;
+        }
+
+        classes.forEach((cls) => {
+            const row = createElement(subList, "div", ["sub-item"]);
+            createElement(row, "span", [], cls.name);
+            const badge = createElement(row, "span", ["badge", cls.active ? "" : "badge-inactive"], cls.active ? "Active" : "Inactive");
+        });
+    } catch (err) {
+        createElement(subList, "p", ["error-text"], "Failed to load classes.");
     }
 }
