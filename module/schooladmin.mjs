@@ -94,10 +94,10 @@ async function handleCreateClass(e, schoolId) {
         successEl.classList.add("success-text");
         successEl.innerHTML =
             `<strong>Class created!</strong><br>` +
-            `Rep email: <code>${email}</code><br>` +
-            `Rep password: <code>${tempPassword}</code><br>` +
-            `Post password: <code>${postPassword}</code><br>` +
-            `<em>Save these — they won't be shown again.</em>`;
+            `Student email: <code>${email}</code><br>` +
+            `Student password: <code>${tempPassword}</code><br>` +
+            `Feedback password: <code>${postPassword}</code><br>` +
+            `<em>Save these. They won't be shown again.</em>`;
 
         const classList = document.getElementById("class-list");
         loadClasses(classList, schoolId);
