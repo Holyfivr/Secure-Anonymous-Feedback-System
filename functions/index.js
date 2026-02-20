@@ -19,6 +19,27 @@ function requireRole(context, role) {
 }
 
 // ===========================================
+// LIST ACTIVE SCHOOLS (public, for picker)
+// ===========================================
+exports.listSchools = onCall(async () => {
+  const snapshot = await db.collection("schools").where("active", "==", true).get();
+  return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
+});
+
+// ===========================================
+// LIST ACTIVE CLASSES (public, for picker)
+// ===========================================
+exports.listClasses = onCall(async (request) => {
+  const {schoolId} = request.data;
+  if (!schoolId) {
+    throw new HttpsError("invalid-argument", "Missing schoolId.");
+  }
+  const snapshot = await db.collection("schools").doc(schoolId)
+      .collection("classes").where("active", "==", true).get();
+  return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
+});
+
+// ===========================================
 // CREATE SCHOOL (superadmin only)
 // ===========================================
 exports.createSchool = onCall(async (request) => {
