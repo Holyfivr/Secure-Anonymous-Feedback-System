@@ -11,7 +11,7 @@ export function createElement(parent, type, classList = [], content) {
         element.classList.add(...classList);
     }
     if (content) {
-        element.innerHTML = content;
+        element.textContent = content;
     }
     parent.appendChild(element);
     return element;

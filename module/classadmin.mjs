@@ -1,19 +1,17 @@
 import { createElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, collection, getDocs, query }
+import { auth, db, signOut, collection, getDocs, query, requireAuth }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
 
 export async function renderClassadminPage() {
+    const token = await requireAuth("classadmin");
+    if (!token) return;
+
     root.innerHTML = "";
     renderNavBar(root);
-
-    const token = await auth.currentUser.getIdTokenResult();
-    const schoolId = token.claims.schoolId;
-    const classId = token.claims.classId;
-
-    renderDashboard(schoolId, classId);
+    renderDashboard(token.claims.schoolId, token.claims.classId);
 }
 
 async function renderDashboard(schoolId, classId) {

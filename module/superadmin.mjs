@@ -1,11 +1,14 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, functions, db, signOut, httpsCallable, collection, getDocs }
+import { auth, functions, db, signOut, httpsCallable, collection, getDocs, requireAuth }
     from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
 
-export function renderSuperadminPage() {
+export async function renderSuperadminPage() {
+    const token = await requireAuth("superadmin");
+    if (!token) return;
+
     root.innerHTML = "";
     renderNavBar(root);
     renderDashboard();
