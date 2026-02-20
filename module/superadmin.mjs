@@ -82,7 +82,7 @@ async function handleCreateSchool(e) {
             `<strong>School created!</strong><br>` +
             `Email: <code>${email}</code><br>` +
             `Temporary password: <code>${tempPassword}</code><br>` +
-            `<em>Save this — it won't be shown again.</em>`;
+            `<em>Save this. It won't be shown again.</em>`;
 
         // Refresh list
         const schoolList = document.getElementById("school-list");

@@ -7,7 +7,7 @@ const root = document.getElementById("root");
 const required = true;
 
 // ==========================================
-// PICKER PAGE — #/feedback
+// PICKER PAGE #/feedback
 // ==========================================
 export async function renderFeedbackPage() {
     root.innerHTML = "";
@@ -97,7 +97,7 @@ export async function renderFeedbackPage() {
 }
 
 // ==========================================
-// FEEDBACK FORM — #/feedback/:schoolId/:classId
+// FEEDBACK FORM #/feedback/:schoolId/:classId
 // ==========================================
 export async function renderFeedbackForm(schoolId, classId) {
     root.innerHTML = "";
@@ -122,7 +122,7 @@ export async function renderFeedbackForm(schoolId, classId) {
         // fallback to generic name
     }
 
-    createElement(card, "h2", [], `Feedback — ${className}`);
+    createElement(card, "h2", [], `Feedback ${className}`);
     createElement(card, "p", ["muted"], "Your message is completely anonymous.");
 
     const form = createElement(card, "form", []);
