@@ -141,6 +141,18 @@ async function loadClasses(container, schoolId) {
             const toggleBtn = createElement(actions, "button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
             toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
 
+            // Send new credentials
+            const sendBtn = createElement(actions, "button", ["btn-small"], "Send New Credentials");
+            sendBtn.addEventListener("click", async () => {
+                if (!confirm(`Send new credentials email to the class admin of "${cls.name}"?`)) return;
+                try {
+                    await fn.resetClassCredentials({ classId: cls.id });
+                    alert("Email sent successfully.");
+                } catch (err) {
+                    alert(err.message || "Failed to send email.");
+                }
+            });
+
             // Delete button — only for inactive classes
             if (!cls.active) {
                 const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");

@@ -1,5 +1,7 @@
+/* eslint-disable linebreak-style */
 /* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
+
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
@@ -12,6 +14,9 @@ const crypto = require("crypto");
 
 // Encryption key for message confidentiality (set via: firebase functions:secrets:set ENCRYPTION_KEY)
 const encryptionKey = defineSecret("ENCRYPTION_KEY");
+const nodemailer = require("nodemailer");
+const smtpEmail = defineSecret("SMTP_EMAIL");
+const smtpPassword = defineSecret("SMTP_PASSWORD");
 
 // --- Helper: salted SHA-256 ---
 function hashPassword(password, salt) {
@@ -198,6 +203,42 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   });
 
   return {classId: classRef.id, adminUid: userRecord.uid};
+});
+
+// ===========================================
+// RESET CLASS POST PASSWORD (class admin only)
+// ===========================================
+exports.resetPostPassword = onCall({region: "europe-west1", secrets: [smtpEmail, smtpPassword]}, async (request) => {
+  requireRole(request, "classadmin");
+  const schoolId = request.auth.token.schoolId;
+  const classId = request.auth.token.classId;
+  const {newPostPassword} = request.data;
+
+  if (!newPostPassword || newPostPassword.length < 6) {
+    throw new HttpsError("invalid-argument", "Password must be 6+ characters.");
+  }
+  const salt = generateSalt();
+  const postPasswordHash = hashPassword(newPostPassword, salt);
+  const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
+  await classRef.update({postPasswordHash, postPasswordSalt: salt});
+
+  const classDoc = await classRef.get();
+  const className = classDoc.data().name;
+
+  // Send confirmation email to the classadmin
+  const userRecord = await getAuth().getUser(request.auth.uid);
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {user: smtpEmail.value(), pass: smtpPassword.value()},
+  });
+  await transporter.sendMail({
+    from: `"Secure Anonymous Feedback System" <${smtpEmail.value()}>`,
+    to: userRecord.email,
+    subject: "SAFS - Post password updated",
+    text: `The post password for your classroom "${className}" has been changed.\n\nNew post password: ${newPostPassword}\n\nIf you did not request this change, contact your school administrator immediately to have your credentials reset.`,
+  });
+
+  return {status: "ok"};
 });
 
 // ===========================================
@@ -466,4 +507,47 @@ exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
   }
 
   throw new HttpsError("permission-denied", "Insufficient permissions.");
+});
+
+// ===========================================
+// RESET CLASS CREDENTIALS (schooladmin only)
+// - Generates new random passwords for classadmin and post password, updates them, and emails the classadmin
+// ===========================================
+exports.resetClassCredentials = onCall({region: "europe-west1", secrets: [smtpEmail, smtpPassword]}, async (request) => {
+  requireRole(request, "schooladmin");
+  const schoolId = request.auth.token.schoolId;
+  const {classId} = request.data;
+
+  // Get class-doc
+  const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
+  const classDoc = await classRef.get();
+  if (!classDoc.exists) throw new HttpsError("not-found", "Class not found.");
+
+  // Genererate new password
+  const newLoginPassword = crypto.randomBytes(6).toString("hex"); // 12 tecken
+  const newPostPassword = crypto.randomBytes(6).toString("hex");
+
+  // Uppdate login password for classadmin user
+  const adminUid = classDoc.data().adminUid;
+  await getAuth().updateUser(adminUid, {password: newLoginPassword});
+
+  // Uppdate post password
+  const salt = generateSalt();
+  const postPasswordHash = hashPassword(newPostPassword, salt);
+  await classRef.update({postPasswordHash, postPasswordSalt: salt});
+
+  // Send email to classadmin with new credentials
+  const userRecord = await getAuth().getUser(adminUid);
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {user: smtpEmail.value(), pass: smtpPassword.value()},
+  });
+  await transporter.sendMail({
+    from: `"SAFS" <${smtpEmail.value()}>`,
+    to: userRecord.email,
+    subject: "SAFS - Your credentials have been reset",
+    text: `Your credentials for class "${classDoc.data().name}" have been reset by your school admin.\n\nNew login password: ${newLoginPassword}\nNew feedback password: ${newPostPassword}\n\nPlease change your login password after signing in.`,
+  });
+
+  return {status: "ok"};
 });

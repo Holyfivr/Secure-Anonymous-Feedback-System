@@ -6,6 +6,7 @@ import { getFunctions, httpsCallable }
 import { getFirestore, collection, getDocs, query, doc, getDoc, deleteDoc, where }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+
 const firebaseConfig = {
     apiKey: "AIzaSyAOJ2zWs2Gif3ELa-4Ti8PEKOX3q5czZDo",
     authDomain: "safs-a3496.firebaseapp.com",
@@ -34,6 +35,8 @@ export const fn = {
     deleteSchool: httpsCallable(functions, "deleteSchool"),
     listClassNames: httpsCallable(functions, "listClassNames"),
     toggleActive: httpsCallable(functions, "toggleActive"),
+    resetPostPassword: httpsCallable(functions, "resetPostPassword"),
+    resetClassCredentials: httpsCallable(functions, "resetClassCredentials"),
 };
 
 // Auth guard — returns token if role matches, otherwise redirects to login
