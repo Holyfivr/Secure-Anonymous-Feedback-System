@@ -91,7 +91,7 @@ async function deleteAllDocuments(collectionRef) {
 // ===========================================
 // LIST ACTIVE SCHOOLS (public, for picker)
 // ===========================================
-exports.listSchools = onCall(async () => {
+exports.listSchools = onCall({region: "europe-west1"}, async () => {
   const snapshot = await db.collection("schools").where("active", "==", true).get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
@@ -99,7 +99,7 @@ exports.listSchools = onCall(async () => {
 // ===========================================
 // LIST ACTIVE CLASSES (public, for picker)
 // ===========================================
-exports.listClasses = onCall(async (request) => {
+exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
   const {schoolId} = request.data;
   if (!schoolId) {
     throw new HttpsError("invalid-argument", "Missing schoolId.");
@@ -112,7 +112,7 @@ exports.listClasses = onCall(async (request) => {
 // ===========================================
 // GET CLASS NAME (public, for feedback form)
 // ===========================================
-exports.getClassName = onCall(async (request) => {
+exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
   const {schoolId, classId} = request.data;
   if (!schoolId || !classId) {
     throw new HttpsError("invalid-argument", "Missing schoolId or classId.");
@@ -128,7 +128,7 @@ exports.getClassName = onCall(async (request) => {
 // ===========================================
 // CREATE SCHOOL (superadmin only)
 // ===========================================
-exports.createSchool = onCall(async (request) => {
+exports.createSchool = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolName, adminEmail, adminPassword} = request.data;
@@ -163,7 +163,7 @@ exports.createSchool = onCall(async (request) => {
 // ===========================================
 // CREATE CLASS (school admin only)
 // ===========================================
-exports.createClass = onCall(async (request) => {
+exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -203,7 +203,7 @@ exports.createClass = onCall(async (request) => {
 // ===========================================
 // POST MESSAGE (anonymous, rate-limited)
 // ===========================================
-exports.postMessage = onCall({secrets: [encryptionKey]}, async (request) => {
+exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
   const {schoolId, classId, text, password} = request.data;
 
   if (!schoolId || !classId || !text || !password) {
@@ -259,7 +259,7 @@ exports.postMessage = onCall({secrets: [encryptionKey]}, async (request) => {
 // ===========================================
 // LIST MESSAGES (classadmin only, decrypts)
 // ===========================================
-exports.listMessages = onCall({secrets: [encryptionKey]}, async (request) => {
+exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -293,7 +293,7 @@ exports.listMessages = onCall({secrets: [encryptionKey]}, async (request) => {
 // ===========================================
 // DELETE CLASS (school admin only)
 // ===========================================
-exports.deleteClass = onCall(async (request) => {
+exports.deleteClass = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -336,7 +336,7 @@ exports.deleteClass = onCall(async (request) => {
 // ===========================================
 // DELETE SCHOOL (superadmin only)
 // ===========================================
-exports.deleteSchool = onCall(async (request) => {
+exports.deleteSchool = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolId} = request.data;
@@ -390,7 +390,7 @@ exports.deleteSchool = onCall(async (request) => {
 // ===========================================
 // LIST CLASS NAMES (superadmin, for overview)
 // ===========================================
-exports.listClassNames = onCall(async (request) => {
+exports.listClassNames = onCall({region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -421,7 +421,7 @@ exports.listClassNames = onCall(async (request) => {
 // - Superadmin: can toggle any school or class
 // - School admin: can toggle own classes only
 // ===========================================
-exports.toggleActive = onCall(async (request) => {
+exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }

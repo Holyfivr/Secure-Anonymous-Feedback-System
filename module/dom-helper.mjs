@@ -33,3 +33,9 @@ export function createInput(parent, type, id, placeholder, required) {
     parent.appendChild(input);
     return input;
 }
+
+
+// Intended to be a helper for inserting divs with specific styles, but not fully implemented yet
+export function insertDiv(classList = [], id, layout, heightVal, widthVal, marginVal,  ) {
+
+}

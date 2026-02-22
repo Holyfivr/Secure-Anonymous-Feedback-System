@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, functions, db, signOut, httpsCallable, collection, getDocs, requireAuth }
+import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml }
     from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
@@ -70,21 +70,20 @@ async function handleCreateSchool(e) {
 
     try {
         const tempPassword = crypto.randomUUID().slice(0, 12);
-        const createSchool = httpsCallable(functions, "createSchool");
-        const result = await createSchool({
+        const result = await fn.createSchool({
             schoolName: name,
             adminEmail: email,
             adminPassword: tempPassword,
         });
 
-        // Show credentials to superadmin
+        // Show credentials to superadmin (escaped to prevent XSS)
         const successEl = document.getElementById("create-school-error");
         successEl.classList.remove("error-text");
         successEl.classList.add("success-text");
         successEl.innerHTML =
             `<strong>School created!</strong><br>` +
-            `Email: <code>${email}</code><br>` +
-            `Temporary password: <code>${tempPassword}</code><br>` +
+            `Email: <code>${escapeHtml(email)}</code><br>` +
+            `Temporary password: <code>${escapeHtml(tempPassword)}</code><br>` +
             `<em>Save this. It won't be shown again.</em>`;
 
         // Refresh list
@@ -109,8 +108,12 @@ async function handleCreateSchool(e) {
 
 async function loadSchools(container) {
     container.innerHTML = "";
+    const spinner = createElement(container, "div", ["loading-spinner"]);
+
     try {
         const snapshot = await getDocs(collection(db, "schools"));
+        spinner.remove();
+
         if (snapshot.empty) {
             const placeholder = createElement(container, "p", ["muted"], "No schools yet.");
             placeholder.style.fontStyle = "italic";
@@ -140,14 +143,14 @@ async function loadSchools(container) {
             }
         });
     } catch (err) {
+        spinner.remove();
         createElement(container, "p", ["error-text"], "Failed to load schools.");
     }
 }
 
 async function handleToggleSchool(schoolId, container) {
     try {
-        const toggleActive = httpsCallable(functions, "toggleActive");
-        await toggleActive({ schoolId });
+        await fn.toggleActive({ schoolId });
         loadSchools(container);
     } catch (err) {
         alert(err.message || "Failed to toggle school.");
@@ -158,8 +161,7 @@ async function handleDeleteSchool(schoolId, schoolName, container) {
     if (!confirm(`Delete "${schoolName}" and ALL its classes and messages? This cannot be undone.`)) return;
 
     try {
-        const deleteSchool = httpsCallable(functions, "deleteSchool");
-        await deleteSchool({ schoolId });
+        await fn.deleteSchool({ schoolId });
         loadSchools(container);
     } catch (err) {
         alert(err.message || "Failed to delete school.");
@@ -177,11 +179,14 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
 
     viewBtn.textContent = "Hide classes";
     const subList = createElement(schoolItem, "div", ["sub-list"]);
+    const spinner = createElement(subList, "div", ["loading-spinner"]);
 
     try {
-        const listClassNames = httpsCallable(functions, "listClassNames");
-        const result = await listClassNames({ schoolId });
-        const classes = result.data;
+        // Direct Firestore read — authorized by security rules for superadmin
+        const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
+        spinner.remove();
+
+        const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
         if (classes.length === 0) {
             const p = createElement(subList, "p", ["muted"], "No classes.");
@@ -198,6 +203,7 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
             createElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
         });
     } catch (err) {
+        spinner.remove();
         createElement(subList, "p", ["error-text"], "Failed to load classes.");
     }
 }

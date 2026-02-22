@@ -1,7 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { functions, httpsCallable }
-    from "./firebase-config.mjs";
+import { fn } from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
 const required = true;
@@ -25,7 +24,7 @@ export async function renderFeedbackPage() {
     createElement(schoolGroup, "label", [], "School");
     const schoolSelect = createElement(schoolGroup, "select", []);
     schoolSelect.id = "pick-school";
-    schoolSelect.innerHTML = `<option value="">Loading schools...</option>`;
+    schoolSelect.innerHTML = `<option value="">Loading schools…</option>`;
 
     // Class select (disabled until school is picked)
     const classGroup = createElement(form, "div", ["form-group"]);
@@ -43,8 +42,7 @@ export async function renderFeedbackPage() {
 
     // Load schools
     try {
-        const listSchools = httpsCallable(functions, "listSchools");
-        const result = await listSchools();
+        const result = await fn.listSchools();
         schoolSelect.innerHTML = `<option value="">Select school...</option>`;
         result.data.forEach((school) => {
             const option = document.createElement("option");
@@ -59,7 +57,7 @@ export async function renderFeedbackPage() {
     // When school is selected, load classes
     schoolSelect.addEventListener("change", async () => {
         const schoolId = schoolSelect.value;
-        classSelect.innerHTML = `<option value="">Loading classes...</option>`;
+        classSelect.innerHTML = `<option value="">Loading classes…</option>`;
         classSelect.disabled = true;
 
         if (!schoolId) {
@@ -68,8 +66,7 @@ export async function renderFeedbackPage() {
         }
 
         try {
-            const listClasses = httpsCallable(functions, "listClasses");
-            const result = await listClasses({ schoolId });
+            const result = await fn.listClasses({ schoolId });
             classSelect.innerHTML = `<option value="">Select class...</option>`;
             result.data.forEach((cls) => {
                 const option = document.createElement("option");
@@ -106,19 +103,10 @@ export async function renderFeedbackForm(schoolId, classId) {
     const wrapper = createElement(root, "div", ["page-wrapper"]);
     const card = createElement(wrapper, "div", ["card", "feedback-card"]);
 
-    // Load class name via Cloud Function (anonymous users can't read Firestore directly)
-    let className = "your class";
-    try {
-        const getClassName = httpsCallable(functions, "getClassName");
-        const result = await getClassName({ schoolId, classId });
-        className = result.data.name;
-    } catch (err) {
-        // fallback to generic name
-    }
-
-    createElement(card, "h2", [], `Feedback ${className}`);
+    const heading = createElement(card, "h2", [], "Feedback");
     createElement(card, "p", ["muted"], "Your message is completely anonymous.");
 
+    // Build the form immediately; fetch class name in background
     const form = createElement(card, "form", []);
     form.addEventListener("submit", (e) => handlePostMessage(e, schoolId, classId));
 
@@ -149,7 +137,11 @@ export async function renderFeedbackForm(schoolId, classId) {
 
     const btn = createElement(form, "button", [], "Send feedback");
     btn.type = "submit";
-    
+
+    // Load class name in background (non-blocking — form is already usable)
+    fn.getClassName({ schoolId, classId })
+        .then(result => { heading.textContent = `Feedback ${result.data.name}`; })
+        .catch(() => { /* keep generic heading */ });
 }
 
 async function handlePostMessage(e, schoolId, classId) {
@@ -166,8 +158,7 @@ async function handlePostMessage(e, schoolId, classId) {
     statusEl.textContent = "";
 
     try {
-        const postMessage = httpsCallable(functions, "postMessage");
-        await postMessage({ schoolId, classId, text, password });
+        await fn.postMessage({ schoolId, classId, text, password });
 
         statusEl.classList.remove("error-text");
         statusEl.classList.add("success-text");

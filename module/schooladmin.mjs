@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, functions, signOut, httpsCallable, requireAuth }
+import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -56,7 +56,7 @@ function renderDashboard(schoolId) {
     const listSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
     const listHeader = createElement(listSection, "div", ["dashboard-header"]);
     createElement(listHeader, "h3", [], "Classes");
-    const countBadge = createElement(listHeader, "span", ["badge"], "0");
+    const countBadge = createElement(listHeader, "span", ["badge"], "…");
     countBadge.id = "class-count";
 
     const classList = createElement(listSection, "div", ["item-list"]);
@@ -80,8 +80,7 @@ async function handleCreateClass(e, schoolId) {
 
     try {
         const tempPassword = crypto.randomUUID().slice(0, 12);
-        const createClass = httpsCallable(functions, "createClass");
-        await createClass({
+        await fn.createClass({
             className: name,
             adminEmail: email,
             adminPassword: tempPassword,
@@ -93,9 +92,9 @@ async function handleCreateClass(e, schoolId) {
         successEl.classList.add("success-text");
         successEl.innerHTML =
             `<strong>Class created!</strong><br>` +
-            `Student email: <code>${email}</code><br>` +
-            `Student password: <code>${tempPassword}</code><br>` +
-            `Feedback password: <code>${postPassword}</code><br>` +
+            `Student email: <code>${escapeHtml(email)}</code><br>` +
+            `Student password: <code>${escapeHtml(tempPassword)}</code><br>` +
+            `Feedback password: <code>${escapeHtml(postPassword)}</code><br>` +
             `<em>Save these. They won't be shown again.</em>`;
 
         const classList = document.getElementById("class-list");
@@ -119,10 +118,14 @@ async function handleCreateClass(e, schoolId) {
 
 async function loadClasses(container, schoolId) {
     container.innerHTML = "";
+    const spinner = createElement(container, "div", ["loading-spinner"]);
+
     try {
-        const listClassNames = httpsCallable(functions, "listClassNames");
-        const result = await listClassNames({ schoolId });
-        const classes = result.data;
+        // Direct Firestore read — authorized by security rules for schooladmin
+        const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
+        spinner.remove();
+
+        const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
         const countEl = document.getElementById("class-count");
         countEl.textContent = classes.length;
@@ -141,7 +144,7 @@ async function loadClasses(container, schoolId) {
 
             // Toggle active/inactive button
             const toggleBtn = createElement(actions, "button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
-            toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId));
+            toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
 
             // Delete button — only for inactive classes
             if (!cls.active) {
@@ -150,18 +153,41 @@ async function loadClasses(container, schoolId) {
             }
         });
     } catch (err) {
+        spinner.remove();
         createElement(container, "p", ["error-text"], "Failed to load classes.");
     }
 }
 
-async function handleToggleClass(classId, schoolId) {
-    try {
-        const toggleActive = httpsCallable(functions, "toggleActive");
-        await toggleActive({ schoolId, classId });
+async function handleToggleClass(classId, schoolId, toggleBtn, row) {
+    // Optimistic UI: immediately toggle the button appearance
+    const wasActive = toggleBtn.textContent === "Active";
+    toggleBtn.textContent = wasActive ? "Inactive" : "Active";
+    toggleBtn.classList.toggle("btn-active", !wasActive);
+    toggleBtn.classList.toggle("btn-inactive", wasActive);
+    toggleBtn.disabled = true;
 
-        const classList = document.getElementById("class-list");
-        loadClasses(classList, schoolId);
+    try {
+        await fn.toggleActive({ schoolId, classId });
+        toggleBtn.disabled = false;
+
+        // If we just deactivated, add a delete button; if activated, remove it
+        if (wasActive) {
+            const actions = row.querySelector(".item-actions");
+            const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+            deleteBtn.addEventListener("click", () => {
+                const name = row.querySelector("span").textContent;
+                handleDeleteClass(classId, name, schoolId);
+            });
+        } else {
+            const deleteBtn = row.querySelector(".btn-danger");
+            if (deleteBtn) deleteBtn.remove();
+        }
     } catch (err) {
+        // Revert on failure
+        toggleBtn.textContent = wasActive ? "Active" : "Inactive";
+        toggleBtn.classList.toggle("btn-active", wasActive);
+        toggleBtn.classList.toggle("btn-inactive", !wasActive);
+        toggleBtn.disabled = false;
         alert(err.message || "Failed to toggle class.");
     }
 }
@@ -170,8 +196,7 @@ async function handleDeleteClass(classId, className, schoolId) {
     if (!confirm(`Delete "${className}" and all its messages? This cannot be undone.`)) return;
 
     try {
-        const deleteClass = httpsCallable(functions, "deleteClass");
-        await deleteClass({ classId });
+        await fn.deleteClass({ classId });
 
         const classList = document.getElementById("class-list");
         loadClasses(classList, schoolId);
