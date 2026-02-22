@@ -1,6 +1,6 @@
 import { createElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, collection, getDocs, query, requireAuth }
+import { auth, db, functions, signOut, httpsCallable, requireAuth }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -29,15 +29,9 @@ async function renderDashboard(schoolId, classId) {
     // Load class name
     let className = "your class";
     try {
-        const { doc, getDoc } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
-        const classDoc = await getDoc(
-            doc(db, "schools", schoolId, "classes", classId)
-        );
-        if (classDoc.exists() && classDoc.data().name) {
-            className = classDoc.data().name;
-        }
+        const getClassName = httpsCallable(functions, "getClassName");
+        const result = await getClassName({ schoolId, classId });
+        className = result.data.name;
     } catch (err) { /* fallback */ }
 
     // Feedback link
@@ -70,37 +64,33 @@ async function renderDashboard(schoolId, classId) {
 async function loadMessages(container, schoolId, classId) {
     container.innerHTML = "";
     try {
-        const { orderBy } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
-        const messagesRef = collection(db, "schools", schoolId, "classes", classId, "messages");
-        const q = query(messagesRef, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
+        const listMessages = httpsCallable(functions, "listMessages");
+        const result = await listMessages();
+        const messages = result.data;
 
         const countEl = document.getElementById("msg-count");
-        countEl.textContent = snapshot.size;
+        countEl.textContent = messages.length;
 
-        if (snapshot.empty) {
+        if (messages.length === 0) {
             const placeholder = createElement(container, "p", ["muted"], "No messages yet.");
             placeholder.style.fontStyle = "italic";
             return;
         }
 
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
+        messages.forEach((msg) => {
             const card = createElement(container, "div", ["message-card"]);
 
             const msgHeader = createElement(card, "div", ["message-header"]);
-            const time = data.createdAt?.toDate();
+            const time = msg.createdAt ? new Date(msg.createdAt) : null;
             const timeStr = time
                 ? time.toLocaleDateString("sv-SE") + " " + time.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
                 : "Unknown time";
             createElement(msgHeader, "span", ["muted"], timeStr);
 
             const deleteBtn = createElement(msgHeader, "button", ["btn-danger", "btn-small"], "Delete");
-            deleteBtn.addEventListener("click", () => handleDeleteMessage(docSnap.id, schoolId, classId));
+            deleteBtn.addEventListener("click", () => handleDeleteMessage(msg.id, schoolId, classId));
 
-            createElement(card, "p", ["message-text"], data.text);
+            createElement(card, "p", ["message-text"], msg.text);
         });
     } catch (err) {
         createElement(container, "p", ["error-text"], "Failed to load messages.");

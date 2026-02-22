@@ -149,10 +149,7 @@ export async function renderFeedbackForm(schoolId, classId) {
 
     const btn = createElement(form, "button", [], "Send feedback");
     btn.type = "submit";
-
-    // "Find another class" link
-    const backLink = createElement(card, "p", ["muted"]);
-    backLink.innerHTML = `<a href="#/feedback">Find another class</a>`;
+    
 }
 
 async function handlePostMessage(e, schoolId, classId) {

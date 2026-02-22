@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, functions, db, signOut, httpsCallable, collection, getDocs, requireAuth }
+import { auth, functions, signOut, httpsCallable, requireAuth }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -120,30 +120,33 @@ async function handleCreateClass(e, schoolId) {
 async function loadClasses(container, schoolId) {
     container.innerHTML = "";
     try {
-        const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
-        const countEl = document.getElementById("class-count");
-        countEl.textContent = snapshot.size;
+        const listClassNames = httpsCallable(functions, "listClassNames");
+        const result = await listClassNames({ schoolId });
+        const classes = result.data;
 
-        if (snapshot.empty) {
+        const countEl = document.getElementById("class-count");
+        countEl.textContent = classes.length;
+
+        if (classes.length === 0) {
             const placeholder = createElement(container, "p", ["muted"], "No classes yet.");
             placeholder.style.fontStyle = "italic";
             return;
         }
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
+
+        classes.forEach((cls) => {
             const row = createElement(container, "div", ["item-row"]);
-            createElement(row, "span", [], data.name);
+            createElement(row, "span", [], cls.name);
 
             const actions = createElement(row, "div", ["item-actions"]);
 
             // Toggle active/inactive button
-            const toggleBtn = createElement(actions, "button", ["btn-small", data.active ? "btn-active" : "btn-inactive"], data.active ? "Active" : "Inactive");
-            toggleBtn.addEventListener("click", () => handleToggleClass(docSnap.id, schoolId));
+            const toggleBtn = createElement(actions, "button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
+            toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId));
 
             // Delete button — only for inactive classes
-            if (!data.active) {
+            if (!cls.active) {
                 const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
-                deleteBtn.addEventListener("click", () => handleDeleteClass(docSnap.id, data.name, schoolId));
+                deleteBtn.addEventListener("click", () => handleDeleteClass(cls.id, cls.name, schoolId));
             }
         });
     } catch (err) {

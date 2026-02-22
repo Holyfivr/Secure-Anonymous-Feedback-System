@@ -10,3 +10,4 @@ firebase-debug.log
 firebase-debug.*.log
 ui-debug.log
 functions/set-superadmin.js
+code-review.md

@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue} = require("firebase-admin/firestore");
@@ -8,6 +9,9 @@ const {getFirestore, FieldValue} = require("firebase-admin/firestore");
 initializeApp();
 const db = getFirestore();
 const crypto = require("crypto");
+
+// Encryption key for message confidentiality (set via: firebase functions:secrets:set ENCRYPTION_KEY)
+const encryptionKey = defineSecret("ENCRYPTION_KEY");
 
 // --- Helper: salted SHA-256 ---
 function hashPassword(password, salt) {
@@ -18,6 +22,33 @@ function generateSalt() {
   return crypto.randomBytes(16).toString("hex");
 }
 
+// --- Helper: AES-256-GCM encryption ---
+function encryptText(plaintext, keyHex) {
+  const key = Buffer.from(keyHex, "hex");
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+
+  let encrypted = cipher.update(plaintext, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  const authTag = cipher.getAuthTag().toString("hex");
+
+  // Format: iv:authTag:ciphertext (all hex)
+  return iv.toString("hex") + ":" + authTag + ":" + encrypted;
+}
+
+function decryptText(ciphertext, keyHex) {
+  const [ivHex, authTagHex, encryptedHex] = ciphertext.split(":");
+  const key = Buffer.from(keyHex, "hex");
+  const iv = Buffer.from(ivHex, "hex");
+  const authTag = Buffer.from(authTagHex, "hex");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(authTag);
+
+  let decrypted = decipher.update(encryptedHex, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+}
+
 // --- Helper: check caller role ---
 function requireRole(context, role) {
   if (!context.auth) {
@@ -25,6 +56,35 @@ function requireRole(context, role) {
   }
   if (context.auth.token.role !== role) {
     throw new HttpsError("permission-denied", `Requires ${role} role.`);
+  }
+}
+
+// --- Helper: create Firebase Auth user with mapped errors ---
+async function createUserOrThrow(email, password) {
+  try {
+    return await getAuth().createUser({email, password});
+  } catch (err) {
+    if (err.code === "auth/email-already-exists") {
+      throw new HttpsError("already-exists", "That email is already in use.");
+    }
+    if (err.code === "auth/invalid-email") {
+      throw new HttpsError("invalid-argument", "Invalid email address.");
+    }
+    if (err.code === "auth/invalid-password") {
+      throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+    }
+    throw new HttpsError("internal", "Could not create user: " + err.message);
+  }
+}
+
+// --- Helper: delete all documents in a collection (batched) ---
+async function deleteAllDocuments(collectionRef) {
+  let snapshot = await collectionRef.limit(500).get();
+  while (!snapshot.empty) {
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    snapshot = await collectionRef.limit(500).get();
   }
 }
 
@@ -80,31 +140,14 @@ exports.createSchool = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Password must be 6+ characters.");
   }
 
-  // Create the school admin user
-  let userRecord;
-  try {
-    userRecord = await getAuth().createUser({
-      email: adminEmail,
-      password: adminPassword,
-    });
-  } catch (err) {
-    if (err.code === "auth/email-already-exists") {
-      throw new HttpsError("already-exists", "That email is already in use.");
-    }
-    if (err.code === "auth/invalid-email") {
-      throw new HttpsError("invalid-argument", "Invalid email address.");
-    }
-    if (err.code === "auth/invalid-password") {
-      throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
-    }
-    throw new HttpsError("internal", "Could not create user: " + err.message);
-  }
+  const userRecord = await createUserOrThrow(adminEmail, adminPassword);
 
-  // Create school document
+  // Create school document (with adminUid so we can delete the account later)
   const schoolRef = db.collection("schools").doc();
   await schoolRef.set({
     name: schoolName,
     active: true,
+    adminUid: userRecord.uid,
     createdAt: FieldValue.serverTimestamp(),
   });
 
@@ -134,25 +177,7 @@ exports.createClass = onCall(async (request) => {
   const salt = generateSalt();
   const postPasswordHash = hashPassword(postPassword, salt);
 
-  // Create class admin user
-  let userRecord;
-  try {
-    userRecord = await getAuth().createUser({
-      email: adminEmail,
-      password: adminPassword,
-    });
-  } catch (err) {
-    if (err.code === "auth/email-already-exists") {
-      throw new HttpsError("already-exists", "That email is already in use.");
-    }
-    if (err.code === "auth/invalid-email") {
-      throw new HttpsError("invalid-argument", "Invalid email address.");
-    }
-    if (err.code === "auth/invalid-password") {
-      throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
-    }
-    throw new HttpsError("internal", "Could not create user: " + err.message);
-  }
+  const userRecord = await createUserOrThrow(adminEmail, adminPassword);
 
   // Create class document
   const classRef = db.collection("schools").doc(schoolId).collection("classes").doc();
@@ -178,7 +203,7 @@ exports.createClass = onCall(async (request) => {
 // ===========================================
 // POST MESSAGE (anonymous, rate-limited)
 // ===========================================
-exports.postMessage = onCall(async (request) => {
+exports.postMessage = onCall({secrets: [encryptionKey]}, async (request) => {
   const {schoolId, classId, text, password} = request.data;
 
   if (!schoolId || !classId || !text || !password) {
@@ -217,10 +242,11 @@ exports.postMessage = onCall(async (request) => {
     }
   }
 
-  // Write message
+  // Encrypt and write message
+  const encryptedText = encryptText(text, encryptionKey.value());
   const messagesRef = classRef.collection("messages");
   await messagesRef.add({
-    text: text,
+    text: encryptedText,
     createdAt: FieldValue.serverTimestamp(),
   });
 
@@ -228,6 +254,40 @@ exports.postMessage = onCall(async (request) => {
   await rateLimitRef.set({lastPostAt: FieldValue.serverTimestamp()});
 
   return {status: "ok"};
+});
+
+// ===========================================
+// LIST MESSAGES (classadmin only, decrypts)
+// ===========================================
+exports.listMessages = onCall({secrets: [encryptionKey]}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in.");
+  }
+  if (request.auth.token.role !== "classadmin") {
+    throw new HttpsError("permission-denied", "Requires classadmin role.");
+  }
+
+  const schoolId = request.auth.token.schoolId;
+  const classId = request.auth.token.classId;
+
+  const messagesRef = db.collection("schools").doc(schoolId)
+      .collection("classes").doc(classId).collection("messages");
+  const snapshot = await messagesRef.orderBy("createdAt", "desc").get();
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+
+    // Decrypt message (fallback to raw text for old unencrypted messages)
+    let text;
+    try {
+      text = decryptText(data.text, encryptionKey.value());
+    } catch {
+      text = data.text;
+    }
+
+    const createdAt = data.createdAt?.toDate()?.toISOString() || null;
+    return {id: doc.id, text, createdAt};
+  });
 });
 
 // ===========================================
@@ -250,15 +310,12 @@ exports.deleteClass = onCall(async (request) => {
     throw new HttpsError("not-found", "Class not found.");
   }
 
-  // Delete all messages in subcollection (batches of 500)
-  const messagesRef = classRef.collection("messages");
-  let snapshot = await messagesRef.limit(500).get();
-  while (!snapshot.empty) {
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
-    snapshot = await messagesRef.limit(500).get();
+  if (classDoc.data().active) {
+    throw new HttpsError("failed-precondition", "Deactivate the class before deleting.");
   }
+
+  // Delete all messages in subcollection
+  await deleteAllDocuments(classRef.collection("messages"));
 
   // Delete class admin user if stored
   const adminUid = classDoc.data().adminUid;
@@ -293,31 +350,35 @@ exports.deleteSchool = onCall(async (request) => {
     throw new HttpsError("not-found", "School not found.");
   }
 
+  if (schoolDoc.data().active) {
+    throw new HttpsError("failed-precondition", "Deactivate the school before deleting.");
+  }
+
   // Delete all classes and their messages/users
   const classesSnapshot = await schoolRef.collection("classes").get();
   for (const classDoc of classesSnapshot.docs) {
-    // Delete messages in batches
-    const messagesRef = classDoc.ref.collection("messages");
-    let msgSnapshot = await messagesRef.limit(500).get();
-    while (!msgSnapshot.empty) {
-      const batch = db.batch();
-      msgSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      msgSnapshot = await messagesRef.limit(500).get();
-    }
+    await deleteAllDocuments(classDoc.ref.collection("messages"));
 
-    // Delete class admin user
-    const adminUid = classDoc.data().adminUid;
-    if (adminUid) {
+    const classAdminUid = classDoc.data().adminUid;
+    if (classAdminUid) {
       try {
-        await getAuth().deleteUser(adminUid);
+        await getAuth().deleteUser(classAdminUid);
       } catch (err) {
         // User may already be deleted
       }
     }
 
-    // Delete class document
     await classDoc.ref.delete();
+  }
+
+  // Delete school admin user
+  const schoolAdminUid = schoolDoc.data().adminUid;
+  if (schoolAdminUid) {
+    try {
+      await getAuth().deleteUser(schoolAdminUid);
+    } catch (err) {
+      // User may already be deleted
+    }
   }
 
   // Delete school document
@@ -330,11 +391,24 @@ exports.deleteSchool = onCall(async (request) => {
 // LIST CLASS NAMES (superadmin, for overview)
 // ===========================================
 exports.listClassNames = onCall(async (request) => {
-  requireRole(request, "superadmin");
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in.");
+  }
 
+  const role = request.auth.token.role;
   const {schoolId} = request.data;
+
   if (!schoolId) {
     throw new HttpsError("invalid-argument", "Missing schoolId.");
+  }
+
+  // Schooladmin can only list classes in their own school
+  if (role === "schooladmin") {
+    if (request.auth.token.schoolId !== schoolId) {
+      throw new HttpsError("permission-denied", "Not your school.");
+    }
+  } else if (role !== "superadmin") {
+    throw new HttpsError("permission-denied", "Requires superadmin or schooladmin role.");
   }
 
   const snapshot = await db.collection("schools").doc(schoolId)
