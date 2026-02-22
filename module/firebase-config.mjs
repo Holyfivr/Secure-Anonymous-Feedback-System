@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendP
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { getFirestore, collection, getDocs, query, where }
+import { getFirestore, collection, getDocs, query }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -22,23 +22,21 @@ export const functions = getFunctions(app);
 export const db = getFirestore(app);
 
 // Auth guard — returns token if role matches, otherwise redirects to login
-export async function requireAuth(role) {
-    const user = auth.currentUser;
-    if (!user) {
-        window.location.hash = "#/login";
-        return null;
-    }
-    const token = await user.getIdTokenResult();
-    if (token.claims.role !== role) {
-        window.location.hash = "#/login";
-        return null;
-    }
-    return token;
+export function requireAuth(role) {
+    return new Promise((resolve) => {
+        const unsub = onAuthStateChanged(auth, async (user) => {
+            unsub();
+            if (!user) { window.location.hash = "#/login"; return resolve(null); }
+            const token = await user.getIdTokenResult();
+            if (token.claims.role !== role) { window.location.hash = "#/login"; return resolve(null); }
+            resolve(token);
+        });
+    });
 }
 
 // Re-export what the app needs
 export {
-    signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail,
+    signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
     httpsCallable,
-    collection, getDocs, query, where,
+    collection, getDocs, query,
 };

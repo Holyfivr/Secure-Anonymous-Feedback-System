@@ -192,7 +192,10 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
         classes.forEach((cls) => {
             const row = createElement(subList, "div", ["sub-item"]);
             createElement(row, "span", [], cls.name);
-            const badge = createElement(row, "span", ["badge", cls.active ? "" : "badge-inactive"], cls.active ? "Active" : "Inactive");
+
+            const badgeClasses = ["badge"];
+            if (!cls.active) badgeClasses.push("badge-inactive");
+            createElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
         });
     } catch (err) {
         createElement(subList, "p", ["error-text"], "Failed to load classes.");
