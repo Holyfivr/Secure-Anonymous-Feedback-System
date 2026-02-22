@@ -37,10 +37,6 @@ function renderDashboard(schoolId) {
     createElement(emailGroup, "label", [], "Rep email");
     createInput(emailGroup, "email", "class-admin-email", "rep@school.com", required);
 
-    const postPassGroup = createElement(form, "div", ["form-group"]);
-    createElement(postPassGroup, "label", [], "Post password");
-    createInput(postPassGroup, "text", "class-post-password", "Password students use to post", required);
-
     const errorMsg = createElement(form, "div", ["error-text"]);
     errorMsg.id = "create-class-error";
 
@@ -64,22 +60,22 @@ async function handleCreateClass(e, schoolId) {
     e.preventDefault();
     const name = document.getElementById("class-name").value;
     const email = document.getElementById("class-admin-email").value;
-    const postPassword = document.getElementById("class-post-password").value;
     const errorEl = document.getElementById("create-class-error");
 
-    if (!name || !email || !postPassword) {
+    if (!name || !email) {
         errorEl.textContent = "Fill in all fields.";
         return;
     }
     errorEl.textContent = "";
 
     try {
+        const tempPostPassword = crypto.randomUUID().slice(0, 12);
         const tempPassword = crypto.randomUUID().slice(0, 12);
         await fn.createClass({
             className: name,
             adminEmail: email,
             adminPassword: tempPassword,
-            postPassword: postPassword,
+            postPassword: tempPostPassword,
         });
 
         const successEl = document.getElementById("create-class-error");
@@ -89,7 +85,7 @@ async function handleCreateClass(e, schoolId) {
             `<strong>Class created!</strong><br>` +
             `Student email: <code>${escapeHtml(email)}</code><br>` +
             `Student password: <code>${escapeHtml(tempPassword)}</code><br>` +
-            `Feedback password: <code>${escapeHtml(postPassword)}</code><br>` +
+            `Feedback password: <code>${escapeHtml(tempPostPassword)}</code><br>` +
             `<em>Save these. They won't be shown again.</em>`;
 
         const classList = document.getElementById("class-list");

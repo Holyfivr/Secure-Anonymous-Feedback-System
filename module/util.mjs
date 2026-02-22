@@ -4,7 +4,7 @@ import { auth, sendPasswordResetEmail } from "./firebase-config.mjs";
 export async function resetPassword(e) {
     e.preventDefault();
 
-        const loggedInUser = localStorage.getItem("currentUser");
+    const loggedInUser = localStorage.getItem("currentUser");
     if (loggedInUser) {
         const user = JSON.parse(loggedInUser);
         console.log("Logged in user:", user);
