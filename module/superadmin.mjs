@@ -10,7 +10,7 @@ export async function renderSuperadminPage() {
     if (!token) return;
 
     root.innerHTML = "";
-    renderNavBar(root);
+    renderNavBar(root, true);
     renderDashboard();
 }
 
@@ -20,11 +20,6 @@ function renderDashboard() {
     // Header
     const header = createElement(wrapper, "div", ["dashboard-header"]);
     createElement(header, "h2", [], "Superadmin");
-    const logoutBtn = createElement(header, "button", ["btn-danger"], "Log out");
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.hash = "#/login";
-    });
 
     // Create school section
     const createSection = createElement(wrapper, "div", ["card", "dashboard-section"]);

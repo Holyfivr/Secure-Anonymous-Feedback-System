@@ -11,7 +11,7 @@ export async function renderSchooladminPage() {
     if (!token) return;
 
     root.innerHTML = "";
-    renderNavBar(root);
+    renderNavBar(root, true);
     renderDashboard(token.claims.schoolId);
 }
 
@@ -21,11 +21,6 @@ function renderDashboard(schoolId) {
     // Header
     const header = createElement(wrapper, "div", ["dashboard-header"]);
     createElement(header, "h2", [], "School Admin");
-    const logoutBtn = createElement(header, "button", ["btn-danger"], "Log out");
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.hash = "#/login";
-    });
 
     // Create class section
     const createSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
