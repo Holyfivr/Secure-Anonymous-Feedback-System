@@ -25,7 +25,7 @@ export function renderNavBar(parent, loggedIn) {
     `;
 
     const logoutBtn = navBar.querySelector("a.btn-danger");
-    addLogoutButton(logoutBtn)
+    addLogoutButton(logoutBtn);
 
   } else {
   navBar.innerHTML = `

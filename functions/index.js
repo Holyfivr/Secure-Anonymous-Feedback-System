@@ -177,6 +177,9 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   if (!className || !adminEmail || !adminPassword || !postPassword) {
     throw new HttpsError("invalid-argument", "Missing fields.");
   }
+  if (postPassword.length < 6) {
+    throw new HttpsError("invalid-argument", "Post password must be 6+ characters.");
+  }
 
   // Hash the post password (salted SHA-256)
   const salt = generateSalt();
@@ -517,21 +520,21 @@ exports.resetClassCredentials = onCall({region: "europe-west1", secrets: [smtpEm
   requireRole(request, "schooladmin");
   const schoolId = request.auth.token.schoolId;
   const {classId} = request.data;
-
+  if (!classId) throw new HttpsError("invalid-argument", "Missing classId.");
   // Get class-doc
   const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
   const classDoc = await classRef.get();
   if (!classDoc.exists) throw new HttpsError("not-found", "Class not found.");
 
-  // Genererate new password
+  // Generate new password
   const newLoginPassword = crypto.randomBytes(6).toString("hex"); // 12 tecken
   const newPostPassword = crypto.randomBytes(6).toString("hex");
 
-  // Uppdate login password for classadmin user
+  // Update login password for classadmin user
   const adminUid = classDoc.data().adminUid;
   await getAuth().updateUser(adminUid, {password: newLoginPassword});
 
-  // Uppdate post password
+  // Update post password
   const salt = generateSalt();
   const postPasswordHash = hashPassword(newPostPassword, salt);
   await classRef.update({postPasswordHash, postPasswordSalt: salt});

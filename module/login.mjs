@@ -1,6 +1,6 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "./firebase-config.mjs";
+import { auth, signInWithEmailAndPassword, signOut } from "./firebase-config.mjs";
 import { resetPassword } from "./util.mjs";
 const root = document.getElementById("root");
 const required = true;
