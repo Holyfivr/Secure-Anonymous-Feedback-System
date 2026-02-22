@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendP
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { getFirestore, collection, getDocs, query }
+import { getFirestore, collection, getDocs, query, doc, getDoc, deleteDoc, where }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -18,8 +18,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, "europe-west1");
 export const db = getFirestore(app);
+
+// Pre-built callable references (avoids recreating on every call)
+export const fn = {
+    listSchools: httpsCallable(functions, "listSchools"),
+    listClasses: httpsCallable(functions, "listClasses"),
+    getClassName: httpsCallable(functions, "getClassName"),
+    createSchool: httpsCallable(functions, "createSchool"),
+    createClass: httpsCallable(functions, "createClass"),
+    postMessage: httpsCallable(functions, "postMessage"),
+    listMessages: httpsCallable(functions, "listMessages"),
+    deleteClass: httpsCallable(functions, "deleteClass"),
+    deleteSchool: httpsCallable(functions, "deleteSchool"),
+    listClassNames: httpsCallable(functions, "listClassNames"),
+    toggleActive: httpsCallable(functions, "toggleActive"),
+};
 
 // Auth guard — returns token if role matches, otherwise redirects to login
 export function requireAuth(role) {
@@ -34,9 +49,16 @@ export function requireAuth(role) {
     });
 }
 
+// Escape HTML to prevent XSS when inserting user-supplied text into innerHTML
+export function escapeHtml(str) {
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+}
+
 // Re-export what the app needs
 export {
     signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
     httpsCallable,
-    collection, getDocs, query,
+    collection, getDocs, query, doc, getDoc, deleteDoc, where,
 };

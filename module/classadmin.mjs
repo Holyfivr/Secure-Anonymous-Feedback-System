@@ -1,6 +1,6 @@
 import { createElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, functions, signOut, httpsCallable, requireAuth }
+import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -26,20 +26,12 @@ async function renderDashboard(schoolId, classId) {
         window.location.hash = "#/login";
     });
 
-    // Load class name
-    let className = "your class";
-    try {
-        const getClassName = httpsCallable(functions, "getClassName");
-        const result = await getClassName({ schoolId, classId });
-        className = result.data.name;
-    } catch (err) { /* fallback */ }
-
-    // Feedback link
+    // Feedback link (renders instantly, no server call)
     const linkSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
     createElement(linkSection, "h3", [], "Feedback link");
     const feedbackUrl = `${window.location.origin}${window.location.pathname}#/feedback/${schoolId}/${classId}`;
     const urlRow = createElement(linkSection, "div", ["url-row"]);
-    const urlText = createElement(urlRow, "code", ["url-text"], feedbackUrl);
+    createElement(urlRow, "code", ["url-text"], feedbackUrl);
     const copyBtn = createElement(urlRow, "button", ["btn-small"], "Copy");
     copyBtn.addEventListener("click", () => {
         navigator.clipboard.writeText(feedbackUrl);
@@ -48,25 +40,37 @@ async function renderDashboard(schoolId, classId) {
     });
     createElement(linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
 
-    // Messages section
+    // Messages section (with loading indicator)
     const msgSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
     const msgHeader = createElement(msgSection, "div", ["dashboard-header"]);
-    createElement(msgHeader, "h3", [], `Messages — ${className}`);
-    const countBadge = createElement(msgHeader, "span", ["badge"], "0");
+    const msgTitle = createElement(msgHeader, "h3", [], "Messages");
+    const countBadge = createElement(msgHeader, "span", ["badge"], "…");
     countBadge.id = "msg-count";
 
     const msgList = createElement(msgSection, "div", ["item-list"]);
     msgList.id = "msg-list";
+    createElement(msgList, "div", ["loading-spinner"]);
 
-    loadMessages(msgList, schoolId, classId);
+    // Load class name (direct Firestore read) + messages (Cloud Function) IN PARALLEL
+    const [className] = await Promise.all([
+        getDoc(doc(db, "schools", schoolId, "classes", classId))
+            .then(snap => snap.exists() ? snap.data().name : "your class")
+            .catch(() => "your class"),
+        loadMessages(msgList, schoolId, classId),
+    ]);
+
+    msgTitle.textContent = `Messages — ${className}`;
 }
 
 async function loadMessages(container, schoolId, classId) {
     container.innerHTML = "";
+    const spinner = createElement(container, "div", ["loading-spinner"]);
+
     try {
-        const listMessages = httpsCallable(functions, "listMessages");
-        const result = await listMessages();
+        const result = await fn.listMessages();
         const messages = result.data;
+
+        spinner.remove();
 
         const countEl = document.getElementById("msg-count");
         countEl.textContent = messages.length;
@@ -78,38 +82,59 @@ async function loadMessages(container, schoolId, classId) {
         }
 
         messages.forEach((msg) => {
-            const card = createElement(container, "div", ["message-card"]);
-
-            const msgHeader = createElement(card, "div", ["message-header"]);
-            const time = msg.createdAt ? new Date(msg.createdAt) : null;
-            const timeStr = time
-                ? time.toLocaleDateString("sv-SE") + " " + time.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
-                : "Unknown time";
-            createElement(msgHeader, "span", ["muted"], timeStr);
-
-            const deleteBtn = createElement(msgHeader, "button", ["btn-danger", "btn-small"], "Delete");
-            deleteBtn.addEventListener("click", () => handleDeleteMessage(msg.id, schoolId, classId));
-
-            createElement(card, "p", ["message-text"], msg.text);
+            renderMessageCard(container, msg, schoolId, classId);
         });
     } catch (err) {
+        spinner.remove();
         createElement(container, "p", ["error-text"], "Failed to load messages.");
     }
 }
 
-async function handleDeleteMessage(messageId, schoolId, classId) {
+function renderMessageCard(container, msg, schoolId, classId) {
+    const card = createElement(container, "div", ["message-card"]);
+    card.dataset.messageId = msg.id;
+
+    const msgHeader = createElement(card, "div", ["message-header"]);
+    const time = msg.createdAt ? new Date(msg.createdAt) : null;
+    const timeStr = time
+        ? time.toLocaleDateString("sv-SE") + " " + time.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
+        : "Unknown time";
+    createElement(msgHeader, "span", ["muted"], timeStr);
+
+    const deleteBtn = createElement(msgHeader, "button", ["btn-danger", "btn-small"], "Delete");
+    deleteBtn.addEventListener("click", () => handleDeleteMessage(msg.id, card, schoolId, classId));
+
+    createElement(card, "p", ["message-text"], msg.text);
+}
+
+async function handleDeleteMessage(messageId, cardEl, schoolId, classId) {
     if (!confirm("Delete this message?")) return;
 
+    // Optimistic UI: remove from DOM immediately
+    cardEl.style.opacity = "0.4";
+    cardEl.style.pointerEvents = "none";
+
     try {
-        const { doc, deleteDoc } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
         const msgRef = doc(db, "schools", schoolId, "classes", classId, "messages", messageId);
         await deleteDoc(msgRef);
 
-        const msgList = document.getElementById("msg-list");
-        loadMessages(msgList, schoolId, classId);
+        cardEl.remove();
+
+        // Update count
+        const countEl = document.getElementById("msg-count");
+        const remaining = document.querySelectorAll("#msg-list .message-card").length;
+        countEl.textContent = remaining;
+
+        if (remaining === 0) {
+            const msgList = document.getElementById("msg-list");
+            const placeholder = createElement(msgList, "p", ["muted"], "No messages yet.");
+            placeholder.style.fontStyle = "italic";
+        }
     } catch (err) {
+        // Revert optimistic UI on failure
+        console.error("Failed to delete message:", err);
+        cardEl.style.opacity = "1";
+        cardEl.style.pointerEvents = "auto";
         alert("Failed to delete message.");
     }
 }
