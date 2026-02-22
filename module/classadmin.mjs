@@ -42,6 +42,29 @@ async function renderDashboard(schoolId, classId) {
         setTimeout(() => { copyBtn.textContent = "Copy"; }, 2000);
     });
     createElement(linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+   
+   
+    const resetPasswordSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
+    const resetHeader = createElement(resetPasswordSection, "div", ["dashboard-header"]);
+    createElement(resetHeader, "p", [], "Reset post password");
+    createElement(resetHeader, "input", ["input-small", "reset-post-password"], "");
+    const resetBtn = createElement(resetHeader, "button", ["btn-small"], "Reset");
+    resetBtn.addEventListener("click", async () => {
+        const newPassword = resetHeader.querySelector(".reset-post-password").value.trim();
+        if (!newPassword) {
+            alert("Please enter a new post password.");
+            return;
+        }
+        try {
+            await fn.resetPostPassword({ newPostPassword: newPassword });
+            alert("Post password reset successfully.");
+            resetHeader.querySelector(".reset-post-password").value = "";
+        } catch (err) {
+            console.error("Error resetting post password:", err);
+            alert("Failed to reset post password.");
+        }
+    });
+
 
     // Messages section (with loading indicator)
     const msgSection = createElement(wrapper, "div", ["card", "dashboard-section"]);

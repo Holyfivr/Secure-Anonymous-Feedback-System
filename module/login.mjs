@@ -1,6 +1,7 @@
 import { createElement, createInput } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "./firebase-config.mjs";
+import { resetPassword } from "./util.mjs";
 const root = document.getElementById("root");
 const required = true;
 
@@ -35,7 +36,7 @@ function renderLoginForm() {
 
     const forgotLink = createElement(card, "p", ["forgot-password"]);
     forgotLink.innerHTML = `<a href="#" id="forgot-password-link">Forgot password?</a>`;
-    forgotLink.querySelector("a").addEventListener("click", handleForgotPassword);
+    forgotLink.querySelector("a").addEventListener("click", resetPassword);
 }
 
 async function handleLogin(e) {
@@ -55,6 +56,7 @@ async function handleLogin(e) {
         const credential = await signInWithEmailAndPassword(auth, email, password);
         const token = await credential.user.getIdTokenResult(true);
         const role = token.claims.role;
+        localStorage.setItem("currentUser", JSON.stringify({ email, role }));
 
         if (role === "superadmin") window.location.hash = "#/superadmin";
         else if (role === "schooladmin") window.location.hash = "#/schooladmin";
@@ -68,24 +70,4 @@ async function handleLogin(e) {
     }
 }
 
-async function handleForgotPassword(e) {
-    e.preventDefault();
-    const email = document.getElementById("login-email").value;
-    const errorEl = document.getElementById("login-error");
 
-    if (!email) {
-        errorEl.textContent = "Enter your email first.";
-        return;
-    }
-
-    try {
-        await sendPasswordResetEmail(auth, email);
-        errorEl.classList.remove("error-text");
-        errorEl.classList.add("success-text");
-        errorEl.textContent = "Password reset email sent! Check your inbox or spam folder.";
-    } catch (err) {
-        errorEl.classList.remove("success-text");
-        errorEl.classList.add("error-text");
-        errorEl.textContent = "Could not send reset email. Check the address.";
-    }
-}

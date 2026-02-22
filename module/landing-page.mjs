@@ -1,5 +1,6 @@
 import { createElement } from "./dom-helper.mjs";
 import { signOut, auth } from "./firebase-config.mjs";
+import { redirectIfLoggedIn } from "./util.mjs";
 const root = document.getElementById("root");
 
 export function renderLandingPage() {
@@ -16,6 +17,7 @@ export function renderNavBar(parent, loggedIn) {
   const nav = createElement(parent, "nav", ["navbar"]);
   createElement(nav, "div", ["logo"], "S A F S");
   const navBar = createElement(nav, "div", ["nav-links"]);
+  redirectIfLoggedIn();
   if (loggedIn) {
     navBar.innerHTML = `
         ${navLinks}
@@ -40,6 +42,7 @@ export async function addLogoutButton(btn) {
     btn.href = "#/login";
     btn.addEventListener("click", async () => {
         await signOut(auth);
+        localStorage.removeItem("currentUser");
         window.location.hash = "#/login";
     });
 }
