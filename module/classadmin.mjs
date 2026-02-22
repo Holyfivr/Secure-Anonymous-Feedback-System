@@ -3,14 +3,22 @@ import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
 
+
+/* Class Admin Dashboard (URL: #/classadmin) */
+
+// Root div for the index.html page
 const root = document.getElementById("root");
 
+/* Renders the class admin dashboard view */
 export async function renderClassadminPage() {
+    // Check auth and role first - if not authenticated or wrong role, requireAuth will redirect to Login and return null
     const token = await requireAuth("classadmin");
     if (!token) return;
 
+    // Clears the page
     root.innerHTML = "";
-    renderNavBar(root);
+    // Renders the nav bar
+    renderNavBar(root, true);
     renderDashboard(token.claims.schoolId, token.claims.classId);
 }
 
@@ -20,11 +28,6 @@ async function renderDashboard(schoolId, classId) {
     // Header
     const header = createElement(wrapper, "div", ["dashboard-header"]);
     createElement(header, "h2", [], "Class Rep");
-    const logoutBtn = createElement(header, "button", ["btn-danger"], "Log out");
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.hash = "#/login";
-    });
 
     // Feedback link (renders instantly, no server call)
     const linkSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
@@ -87,6 +90,7 @@ async function loadMessages(container, schoolId, classId) {
     } catch (err) {
         spinner.remove();
         createElement(container, "p", ["error-text"], "Failed to load messages.");
+        console.error("Error loading messages:", err);
     }
 }
 
