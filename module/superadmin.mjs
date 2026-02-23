@@ -1,4 +1,4 @@
-import { createElement, createInput } from "./dom-helper.mjs";
+import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml }
     from "./firebase-config.mjs";
@@ -103,11 +103,11 @@ async function handleCreateSchool(e) {
 
 async function loadSchools(container) {
     container.innerHTML = "";
-    const spinner = createElement(container, "div", ["loading-spinner"]);
+    showSpinner(container);
 
     try {
         const snapshot = await getDocs(collection(db, "schools"));
-        spinner.remove();
+        hideSpinner(container);
 
         if (snapshot.empty) {
             const placeholder = createElement(container, "p", ["muted"], "No schools yet.");
@@ -138,7 +138,7 @@ async function loadSchools(container) {
             }
         });
     } catch (err) {
-        spinner.remove();
+        hideSpinner(container);
         createElement(container, "p", ["error-text"], "Failed to load schools.");
     }
 }
@@ -174,12 +174,12 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
 
     viewBtn.textContent = "Hide classes";
     const subList = createElement(schoolItem, "div", ["sub-list"]);
-    const spinner = createElement(subList, "div", ["loading-spinner"]);
+    showSpinner(subList);
 
     try {
         // Direct Firestore read — authorized by security rules for superadmin
         const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
-        spinner.remove();
+        hideSpinner(subList);
 
         const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
@@ -198,7 +198,7 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
             createElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
         });
     } catch (err) {
-        spinner.remove();
+        hideSpinner(subList);
         createElement(subList, "p", ["error-text"], "Failed to load classes.");
     }
 }

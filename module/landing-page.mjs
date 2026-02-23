@@ -1,6 +1,5 @@
 import { createElement } from "./dom-helper.mjs";
 import { signOut, auth } from "./firebase-config.mjs";
-import { redirectIfLoggedIn } from "./util.mjs";
 const root = document.getElementById("root");
 
 export function renderLandingPage() {
@@ -10,6 +9,7 @@ export function renderLandingPage() {
 
 const navLinks = `
         <a href="#/home">Home</a>
+        <a href="#/privacy">Privacy</a>
         <a href="#/feedback">Send feedback</a>
         `;
 
@@ -17,7 +17,6 @@ export function renderNavBar(parent, loggedIn) {
   const nav = createElement(parent, "nav", ["navbar"]);
   createElement(nav, "div", ["logo"], "S A F S");
   const navBar = createElement(nav, "div", ["nav-links"]);
-  redirectIfLoggedIn();
   if (loggedIn) {
     navBar.innerHTML = `
         ${navLinks}

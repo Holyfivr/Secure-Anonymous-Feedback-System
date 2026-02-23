@@ -1,4 +1,4 @@
-import { createElement, createInput } from "./dom-helper.mjs";
+import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs }
     from "./firebase-config.mjs";
@@ -109,12 +109,12 @@ async function handleCreateClass(e, schoolId) {
 
 async function loadClasses(container, schoolId) {
     container.innerHTML = "";
-    const spinner = createElement(container, "div", ["loading-spinner"]);
+    showSpinner(container);
 
     try {
         // Direct Firestore read — authorized by security rules for schooladmin
         const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
-        spinner.remove();
+        hideSpinner(container);
 
         const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
@@ -156,7 +156,7 @@ async function loadClasses(container, schoolId) {
             }
         });
     } catch (err) {
-        spinner.remove();
+        hideSpinner(container);
         createElement(container, "p", ["error-text"], "Failed to load classes.");
     }
 }
