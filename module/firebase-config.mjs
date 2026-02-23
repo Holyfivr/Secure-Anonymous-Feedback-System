@@ -35,8 +35,7 @@ export const fn = {
     deleteSchool: httpsCallable(functions, "deleteSchool"),
     listClassNames: httpsCallable(functions, "listClassNames"),
     toggleActive: httpsCallable(functions, "toggleActive"),
-    resetPostPassword: httpsCallable(functions, "resetPostPassword"),
-    resetClassCredentials: httpsCallable(functions, "resetClassCredentials"),
+    resetFeedbackPassword: httpsCallable(functions, "resetFeedbackPassword"),
 };
 
 // Auth guard — returns token if role matches, otherwise redirects to login

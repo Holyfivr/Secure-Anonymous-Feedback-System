@@ -52,11 +52,11 @@ async function renderDashboard(schoolId, classId) {
     resetBtn.addEventListener("click", async () => {
         const newPassword = resetHeader.querySelector(".reset-post-password").value.trim();
         if (!newPassword) {
-            alert("Please enter a new post password.");
+            alert("Please enter a new feedback password.");
             return;
         }
         try {
-            await fn.resetPostPassword({ newPostPassword: newPassword });
+            await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
             alert("Feedback password reset successfully.");
             resetHeader.querySelector(".reset-post-password").value = "";
         } catch (err) {
