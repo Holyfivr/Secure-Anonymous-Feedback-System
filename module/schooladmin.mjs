@@ -69,13 +69,13 @@ async function handleCreateClass(e, schoolId) {
     errorEl.textContent = "";
 
     try {
-        const tempPostPassword = crypto.randomUUID().slice(0, 12);
+        const tempFeedbackPassword = crypto.randomUUID().slice(0, 12);
         const tempPassword = crypto.randomUUID().slice(0, 12);
         await fn.createClass({
             className: name,
             adminEmail: email,
             adminPassword: tempPassword,
-            postPassword: tempPostPassword,
+            feedbackPassword: tempFeedbackPassword,
         });
 
         const successEl = document.getElementById("create-class-error");
@@ -85,7 +85,7 @@ async function handleCreateClass(e, schoolId) {
             `<strong>Class created!</strong><br>` +
             `Student email: <code>${escapeHtml(email)}</code><br>` +
             `Student password: <code>${escapeHtml(tempPassword)}</code><br>` +
-            `Feedback password: <code>${escapeHtml(tempPostPassword)}</code><br>` +
+            `Feedback password: <code>${escapeHtml(tempFeedbackPassword)}</code><br>` +
             `<em>Save these. They won't be shown again.</em>`;
 
         const classList = document.getElementById("class-list");
@@ -136,18 +136,6 @@ async function loadClasses(container, schoolId) {
             // Toggle active/inactive button
             const toggleBtn = createElement(actions, "button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
             toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
-
-            // Send new credentials
-            const sendBtn = createElement(actions, "button", ["btn-small"], "Send New Credentials");
-            sendBtn.addEventListener("click", async () => {
-                if (!confirm(`Send new credentials email to the class admin of "${cls.name}"?`)) return;
-                try {
-                    await fn.resetClassCredentials({ classId: cls.id });
-                    alert("Email sent successfully.");
-                } catch (err) {
-                    alert(err.message || "Failed to send email.");
-                }
-            });
 
             // Delete button — only for inactive classes
             if (!cls.active) {

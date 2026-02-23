@@ -122,14 +122,14 @@ export async function renderFeedbackForm(schoolId, classId) {
     const msgGroup = createElement(form, "div", ["form-group"]);
     createElement(msgGroup, "label", [], "Your message");
 
-    document.createElement(msgGroup, "textarea")
-    .formatElement(textarea, { maxLength: 500, rows: 5}, null, {id:"feedback-message", placeholder: "Type your feedback here...", required: true});
+    const textArea = createElement(msgGroup, "textarea");
+    formatElement(textArea, {}, [], {id:"feedback-message", placeholder: "Type your feedback here...", required: true, maxLength: 500, rows: 5});
 
 
     // Character counter
     const counter = createElement(msgGroup, "div", ["char-counter"], "0 / 500");
-    textarea.addEventListener("input", () => {
-        counter.textContent = `${textarea.value.length} / 500`;
+    textArea.addEventListener("input", () => {
+        counter.textContent = `${textArea.value.length} / 500`;
     });
 
     const statusEl = createElement(form, "div", ["error-text"]);
