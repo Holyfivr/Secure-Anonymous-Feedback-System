@@ -35,7 +35,20 @@ export function createInput(parent, type, id, placeholder, required) {
 }
 
 
-// Intended to be a helper for inserting divs with specific styles, but not fully implemented yet
-export function insertDiv(classList = [], id, layout, heightVal, widthVal, marginVal,  ) {
+// Utility function to add styles, classes, and attributes to an element
+// With this function we reduce the need for multiple lines of code every time we want to style an element.
+export function formatElement(element, styles = {}, classList = [], attrs = {}) {
+    Object.assign(element.style, styles);
+    if (classList) {
+        element.classList.add(...classList);
+    }
+    Object.assign(element, attrs);
+}
 
+export function showSpinner(parent) {
+    createElement(parent, "div", ["loading-spinner"]);
+}
+
+export function hideSpinner(parent) {
+    parent.querySelector(".loading-spinner")?.remove();
 }

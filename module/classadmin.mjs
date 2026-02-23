@@ -1,4 +1,4 @@
-import { createElement } from "./dom-helper.mjs";
+import { createElement, showSpinner, hideSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
@@ -46,7 +46,7 @@ async function renderDashboard(schoolId, classId) {
    
     const resetPasswordSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
     const resetHeader = createElement(resetPasswordSection, "div", ["dashboard-header"]);
-    createElement(resetHeader, "p", [], "Reset post password");
+    createElement(resetHeader, "p", [], "Reset feedback password");
     createElement(resetHeader, "input", ["input-small", "reset-post-password"], "");
     const resetBtn = createElement(resetHeader, "button", ["btn-small"], "Reset");
     resetBtn.addEventListener("click", async () => {
@@ -57,11 +57,11 @@ async function renderDashboard(schoolId, classId) {
         }
         try {
             await fn.resetPostPassword({ newPostPassword: newPassword });
-            alert("Post password reset successfully.");
+            alert("Feedback password reset successfully.");
             resetHeader.querySelector(".reset-post-password").value = "";
         } catch (err) {
-            console.error("Error resetting post password:", err);
-            alert("Failed to reset post password.");
+            console.error("Error resetting feedback password:", err);
+            alert("Failed to reset feedback password.");
         }
     });
 
@@ -75,7 +75,7 @@ async function renderDashboard(schoolId, classId) {
 
     const msgList = createElement(msgSection, "div", ["item-list"]);
     msgList.id = "msg-list";
-    createElement(msgList, "div", ["loading-spinner"]);
+    showSpinner(msgList);
 
     // Load class name (direct Firestore read) + messages (Cloud Function) IN PARALLEL
     const [className] = await Promise.all([
@@ -90,13 +90,13 @@ async function renderDashboard(schoolId, classId) {
 
 async function loadMessages(container, schoolId, classId) {
     container.innerHTML = "";
-    const spinner = createElement(container, "div", ["loading-spinner"]);
+    showSpinner(container);
 
     try {
         const result = await fn.listMessages();
         const messages = result.data;
 
-        spinner.remove();
+        hideSpinner(container);
 
         const countEl = document.getElementById("msg-count");
         countEl.textContent = messages.length;
@@ -111,7 +111,7 @@ async function loadMessages(container, schoolId, classId) {
             renderMessageCard(container, msg, schoolId, classId);
         });
     } catch (err) {
-        spinner.remove();
+        hideSpinner(container);
         createElement(container, "p", ["error-text"], "Failed to load messages.");
         console.error("Error loading messages:", err);
     }

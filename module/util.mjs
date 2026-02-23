@@ -22,7 +22,8 @@ export async function resetPassword(e) {
         await sendPasswordResetEmail(auth, email);
         errorEl.classList.remove("error-text");
         errorEl.classList.add("success-text");
-        errorEl.textContent = "Password reset email sent! Check your inbox or spam folder.";
+        errorEl.textContent = "Password reset email sent! Check your inbox or spam folder. Note that it may take several minutes for the mail to arrive.";
+        errorEl.style.fontWeight = "bold";
     } catch (err) {
         errorEl.classList.remove("success-text");
         errorEl.classList.add("error-text");

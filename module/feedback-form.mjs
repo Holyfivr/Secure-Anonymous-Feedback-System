@@ -1,4 +1,4 @@
-import { createElement, createInput } from "./dom-helper.mjs";
+import { formatElement, createElement, createInput, hideSpinner, showSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { fn } from "./firebase-config.mjs";
 
@@ -24,7 +24,7 @@ export async function renderFeedbackPage() {
     createElement(schoolGroup, "label", [], "School");
     const schoolSelect = createElement(schoolGroup, "select", []);
     schoolSelect.id = "pick-school";
-    schoolSelect.innerHTML = `<option value="">Loading schools…</option>`;
+    showSpinner(schoolGroup);  
 
     // Class select (disabled until school is picked)
     const classGroup = createElement(form, "div", ["form-group"]);
@@ -43,6 +43,7 @@ export async function renderFeedbackPage() {
     // Load schools
     try {
         const result = await fn.listSchools();
+        hideSpinner(schoolGroup); 
         schoolSelect.innerHTML = `<option value="">Select school...</option>`;
         result.data.forEach((school) => {
             const option = document.createElement("option");
@@ -57,8 +58,9 @@ export async function renderFeedbackPage() {
     // When school is selected, load classes
     schoolSelect.addEventListener("change", async () => {
         const schoolId = schoolSelect.value;
-        classSelect.innerHTML = `<option value="">Loading classes…</option>`;
         classSelect.disabled = true;
+        showSpinner(classGroup);
+
 
         if (!schoolId) {
             classSelect.innerHTML = `<option value="">Pick a school first</option>`;
@@ -67,6 +69,7 @@ export async function renderFeedbackPage() {
 
         try {
             const result = await fn.listClasses({ schoolId });
+            hideSpinner(classGroup);
             classSelect.innerHTML = `<option value="">Select class...</option>`;
             result.data.forEach((cls) => {
                 const option = document.createElement("option");
@@ -118,13 +121,10 @@ export async function renderFeedbackForm(schoolId, classId) {
     // Message
     const msgGroup = createElement(form, "div", ["form-group"]);
     createElement(msgGroup, "label", [], "Your message");
-    const textarea = document.createElement("textarea");
-    textarea.id = "feedback-message";
-    textarea.placeholder = "Write your feedback here...";
-    textarea.required = true;
-    textarea.maxLength = 500;
-    textarea.rows = 5;
-    msgGroup.appendChild(textarea);
+
+    document.createElement(msgGroup, "textarea")
+    .formatElement(textarea, { maxLength: 500, rows: 5}, null, {id:"feedback-message", placeholder: "Type your feedback here...", required: true});
+
 
     // Character counter
     const counter = createElement(msgGroup, "div", ["char-counter"], "0 / 500");
