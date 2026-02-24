@@ -1,4 +1,4 @@
-import { createElement, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
+import { createElement, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { signOut, auth } from "./firebase-config.mjs";
 const root = document.getElementById("root");
 
@@ -16,7 +16,7 @@ const navLinks = [
 export function renderNavBar(parent, loggedIn) {
   const nav = createElement("nav", ["navbar"]);
   insertElement(parent, nav);
-  insertNewElement(nav, "div", ["logo"], "S A F S");
+  addNewElement(nav, "div", ["logo"], "S A F S");
 
   const navBar = createElement("div", ["nav-links"]);
   insertElement(nav, navBar);

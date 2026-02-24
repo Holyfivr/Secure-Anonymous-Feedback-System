@@ -1,4 +1,4 @@
-import { createElement, createInput, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
+import { createElement, createInput, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, signInWithEmailAndPassword, signOut } from "./firebase-config.mjs";
 import { resetPassword, redirectIfLoggedIn } from "./util.mjs";
@@ -19,19 +19,19 @@ function renderLoginForm() {
 
     insertElement(root, wrapper);
     insertElement(wrapper, card);
-    insertNewElement(card, "h2", [], "Log in");
+    addNewElement(card, "h2", [], "Log in");
     insertElement(card, form);
 
     form.addEventListener("submit", handleLogin);
 
     const emailDiv = createElement("div", ["form-group"]);
     insertElement(form, emailDiv);
-    insertNewElement(emailDiv, "label", [], "Email");
+    addNewElement(emailDiv, "label", [], "Email");
     createInput(emailDiv, "email", "login-email", "name@domain.com", required);
 
     const passDiv = createElement("div", ["form-group"]);
     insertElement(form, passDiv);
-    insertNewElement(passDiv, "label", [], "Password");
+    addNewElement(passDiv, "label", [], "Password");
     createInput(passDiv, "password", "login-password", "••••••••••••", required);
 
     const errorMsg = createElement("div", ["error-text"]);

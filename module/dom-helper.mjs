@@ -52,7 +52,7 @@ export function insertElement(parent, target){
  * @param {*} content       Adds text content
  * @returns 
  */
-export function insertNewElement(parent, type, classList = [], content) {
+export function addNewElement(parent, type, classList = [], content) {
     return insertElement(parent, createElement(type, classList, content));
 }
 
@@ -77,7 +77,7 @@ export function createInput(parent, type, id, placeholder, required) {
 
 
 export function showSpinner(parent) {
-    insertNewElement(parent, "div", ["loading-spinner"]);
+    addNewElement(parent, "div", ["loading-spinner"]);
 }
 
 export function hideSpinner(parent) {
