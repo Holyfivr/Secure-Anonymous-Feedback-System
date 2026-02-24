@@ -1,6 +1,6 @@
 import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs }
+import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs, sendPasswordResetEmail }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -78,15 +78,16 @@ async function handleCreateClass(e, schoolId) {
             feedbackPassword: tempFeedbackPassword,
         });
 
+        await sendPasswordResetEmail(auth, email);
+
         const successEl = document.getElementById("create-class-error");
         successEl.classList.remove("error-text");
         successEl.classList.add("success-text");
         successEl.innerHTML =
             `<strong>Class created!</strong><br>` +
             `Student email: <code>${escapeHtml(email)}</code><br>` +
-            `Student password: <code>${escapeHtml(tempPassword)}</code><br>` +
             `Feedback password: <code>${escapeHtml(tempFeedbackPassword)}</code><br>` +
-            `<em>Save these. They won't be shown again.</em>`;
+            `<em>A password setup email has been sent to the student representative.</em>`;
 
         const classList = document.getElementById("class-list");
         loadClasses(classList, schoolId);

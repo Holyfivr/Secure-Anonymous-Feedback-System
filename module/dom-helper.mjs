@@ -35,6 +35,7 @@ export function createInput(parent, type, id, placeholder, required) {
 }
 
 
+
 // Utility function to add styles, classes, and attributes to an element
 // With this function we reduce the need for multiple lines of code every time we want to style an element.
 export function formatElement(element, styles = {}, classList = [], attrs = {}) {
@@ -45,10 +46,16 @@ export function formatElement(element, styles = {}, classList = [], attrs = {}) 
     Object.assign(element, attrs);
 }
 
+
+
 export function showSpinner(parent) {
     createElement(parent, "div", ["loading-spinner"]);
 }
 
 export function hideSpinner(parent) {
     parent.querySelector(".loading-spinner")?.remove();
+}
+
+export function insertElement(parent, target){
+    return parent.appendChild(target);
 }

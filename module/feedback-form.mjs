@@ -1,4 +1,4 @@
-import { formatElement, createElement, createInput, hideSpinner, showSpinner } from "./dom-helper.mjs";
+import { formatElement, createElement, createInput, hideSpinner, showSpinner, getElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { fn } from "./firebase-config.mjs";
 
@@ -12,8 +12,8 @@ export async function renderFeedbackPage() {
     root.innerHTML = "";
     renderNavBar(root);
 
-    const wrapper = createElement(root, "div", ["page-wrapper"]);
-    const card = createElement(wrapper, "div", ["card", "feedback-card"]);
+    const wrapper   = createElement(root, "div", ["page-wrapper"]);
+    const card      = createElement(wrapper, "div", ["card", "feedback-card"]);
     createElement(card, "h2", [], "Send feedback");
     createElement(card, "p", ["muted"], "Find your class to send anonymous feedback.");
 
@@ -103,10 +103,10 @@ export async function renderFeedbackForm(schoolId, classId) {
     root.innerHTML = "";
     renderNavBar(root);
 
-    const wrapper = createElement(root, "div", ["page-wrapper"]);
-    const card = createElement(wrapper, "div", ["card", "feedback-card"]);
-
-    const heading = createElement(card, "h2", [], "Feedback");
+    const wrapper   = createElement(root, "div", ["page-wrapper"]);
+    const card      = createElement(wrapper, "div", ["card", "feedback-card"]);
+    const heading   = createElement(card, "h2", [], "Feedback");
+    
     createElement(card, "p", ["muted"], "Your message is completely anonymous.");
 
     // Build the form immediately; fetch class name in background
@@ -115,15 +115,15 @@ export async function renderFeedbackForm(schoolId, classId) {
 
     // Password
     const passGroup = createElement(form, "div", ["form-group"]);
-    createElement(passGroup, "label", [], "Class password");
-    createInput(passGroup, "password", "feedback-password", "Enter class password", required);
+
+    createElement   (passGroup, "label", [], "Class password");
+    createInput     (passGroup, "password", "feedback-password", "Enter class password", required);
 
     // Message
     const msgGroup = createElement(form, "div", ["form-group"]);
-    createElement(msgGroup, "label", [], "Your message");
-
+    createElement   (msgGroup, "label", [], "Your message");
     const textArea = createElement(msgGroup, "textarea");
-    formatElement(textArea, {}, [], {id:"feedback-message", placeholder: "Type your feedback here...", required: true, maxLength: 500, rows: 5});
+    formatElement   (textArea, {}, [], {id:"feedback-message", placeholder: "Type your feedback here...", required: true, maxLength: 500, rows: 5});
 
 
     // Character counter
@@ -146,34 +146,34 @@ export async function renderFeedbackForm(schoolId, classId) {
 
 async function handlePostMessage(e, schoolId, classId) {
     e.preventDefault();
-    const password = document.getElementById("feedback-password").value;
-    const text = document.getElementById("feedback-message").value;
-    const statusEl = document.getElementById("feedback-status");
+    const password          = document.getElementById("feedback-password").value;
+    const text              = document.getElementById("feedback-message").value;
+    const feedbackStatus    = document.getElementById("feedback-status");
 
     if (!password || !text) {
-        statusEl.textContent = "Fill in all fields.";
+        feedbackStatus.textContent = "Fill in all fields.";
         return;
     }
 
-    statusEl.textContent = "";
+    feedbackStatus.textContent = "";
 
     try {
         await fn.postMessage({ schoolId, classId, text, password });
 
-        statusEl.classList.remove("error-text");
-        statusEl.classList.add("success-text");
-        statusEl.textContent = "Feedback sent!";
+        feedbackStatus.classList.remove ("error-text");
+        feedbackStatus.classList.add    ("success-text");
+        feedbackStatus.textContent = "Feedback sent!";
         e.target.reset();
         document.querySelector(".char-counter").textContent = "0 / 500";
     } catch (err) {
-        statusEl.classList.remove("success-text");
-        statusEl.classList.add("error-text");
+        feedbackStatus.classList.remove ("success-text");
+        feedbackStatus.classList.add    ("error-text");
         if (err.code === "functions/permission-denied") {
-            statusEl.textContent = "Wrong password.";
+            feedbackStatus.textContent = "Wrong password.";
         } else if (err.code === "functions/resource-exhausted") {
-            statusEl.textContent = "Wait 1 minute between messages.";
+            feedbackStatus.textContent = "Wait 1 minute between messages.";
         } else {
-            statusEl.textContent = err.message || "Failed to send feedback.";
+            feedbackStatus.textContent = err.message || "Failed to send feedback.";
         }
     }
 }
