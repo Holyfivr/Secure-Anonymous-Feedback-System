@@ -8,34 +8,33 @@ import { getFirestore, collection, getDocs, query, doc, getDoc, deleteDoc, where
 
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAOJ2zWs2Gif3ELa-4Ti8PEKOX3q5czZDo",
-    authDomain: "safs-a3496.firebaseapp.com",
-    projectId: "safs-a3496",
-    storageBucket: "safs-a3496.firebasestorage.app",
-    messagingSenderId: "960721196233",
-    appId: "1:960721196233:web:68e5081ea62a47c576a918"
+    apiKey              : "AIzaSyAOJ2zWs2Gif3ELa-4Ti8PEKOX3q5czZDo",
+    authDomain          : "safs-a3496.firebaseapp.com",
+    projectId           : "safs-a3496",
+    storageBucket       : "safs-a3496.firebasestorage.app",
+    messagingSenderId   : "960721196233",
+    appId               : "1:960721196233:web:68e5081ea62a47c576a918"
 };
 
-const app = initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
-export const functions = getFunctions(app, "europe-west1");
-export const db = getFirestore(app);
+const app               = initializeApp(firebaseConfig);
+export const auth       = getAuth(app);
+export const functions  = getFunctions(app, "europe-west1");
+export const db         = getFirestore(app);
 
 // Pre-built callable references (avoids recreating on every call)
 export const fn = {
-    listSchools: httpsCallable(functions, "listSchools"),
-    listClasses: httpsCallable(functions, "listClasses"),
-    getClassName: httpsCallable(functions, "getClassName"),
-    createSchool: httpsCallable(functions, "createSchool"),
-    createClass: httpsCallable(functions, "createClass"),
-    postMessage: httpsCallable(functions, "postMessage"),
-    listMessages: httpsCallable(functions, "listMessages"),
-    deleteClass: httpsCallable(functions, "deleteClass"),
-    deleteSchool: httpsCallable(functions, "deleteSchool"),
-    listClassNames: httpsCallable(functions, "listClassNames"),
-    toggleActive: httpsCallable(functions, "toggleActive"),
-    resetFeedbackPassword: httpsCallable(functions, "resetFeedbackPassword"),
+    listSchools             : httpsCallable(functions, "listSchools"),
+    listClasses             : httpsCallable(functions, "listClasses"),
+    getClassName            : httpsCallable(functions, "getClassName"),
+    createSchool            : httpsCallable(functions, "createSchool"),
+    createClass             : httpsCallable(functions, "createClass"),
+    postMessage             : httpsCallable(functions, "postMessage"),
+    listMessages            : httpsCallable(functions, "listMessages"),
+    deleteClass             : httpsCallable(functions, "deleteClass"),
+    deleteSchool            : httpsCallable(functions, "deleteSchool"),
+    listClassNames          : httpsCallable(functions, "listClassNames"),
+    toggleActive            : httpsCallable(functions, "toggleActive"),
+    resetFeedbackPassword   : httpsCallable(functions, "resetFeedbackPassword"),
 };
 
 // Auth guard — returns token if role matches, otherwise redirects to login
