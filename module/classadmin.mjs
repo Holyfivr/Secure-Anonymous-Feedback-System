@@ -59,6 +59,10 @@ async function renderDashboard(schoolId, classId) {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
             alert("Feedback password reset successfully.");
             resetHeader.querySelector(".reset-post-password").value = "";
+            createElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
+            createElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
+            createElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
+
         } catch (err) {
             console.error("Error resetting feedback password:", err);
             alert("Failed to reset feedback password.");

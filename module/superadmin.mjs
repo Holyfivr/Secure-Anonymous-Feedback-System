@@ -1,6 +1,6 @@
 import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml }
+import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml, sendPasswordResetEmail }
     from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
@@ -71,15 +71,16 @@ async function handleCreateSchool(e) {
             adminPassword: tempPassword,
         });
 
-        // Show credentials to superadmin (escaped to prevent XSS)
+        await sendPasswordResetEmail(auth, email);
+
+        // Show creation info to superadmin (escaped to prevent XSS)
         const successEl = document.getElementById("create-school-error");
         successEl.classList.remove("error-text");
         successEl.classList.add("success-text");
         successEl.innerHTML =
             `<strong>School created!</strong><br>` +
             `Email: <code>${escapeHtml(email)}</code><br>` +
-            `Temporary password: <code>${escapeHtml(tempPassword)}</code><br>` +
-            `<em>Save this. It won't be shown again.</em>`;
+            `<em>A password setup email has been sent to the school admin.</em>`;
 
         // Refresh list
         const schoolList = document.getElementById("school-list");
