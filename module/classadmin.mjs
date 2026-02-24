@@ -36,12 +36,12 @@ async function renderDashboard(schoolId, classId) {
     const copyBtn       = createElement("button", ["btn-small"], "Copy");
 
     insertElement       (wrapper, linkSection);
-    addNewElement    (linkSection, "h3", [], "Feedback link");
+    addNewElement       (linkSection, "h3", [], "Feedback link");
     insertElement       (linkSection, urlRow);
-    addNewElement    (urlRow, "code", ["url-text"], feedbackUrl);
+    addNewElement       (urlRow, "code", ["url-text"], feedbackUrl);
     formatElement       (copyBtn, {}, [], { type: "button" });
     insertElement       (urlRow, copyBtn);
-    addNewElement    (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+    addNewElement       (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
     enableCopyBtn       (copyBtn, feedbackUrl);
    
 
@@ -53,7 +53,7 @@ async function renderDashboard(schoolId, classId) {
 
     insertElement       (wrapper, resetPasswordSection);
     insertElement       (resetPasswordSection, resetHeader);
-    addNewElement    (resetHeader, "p", [], "Reset feedback password");
+    addNewElement       (resetHeader, "p", [], "Reset feedback password");
     formatElement       (resetInput, {}, [], { type: "text" });
     insertElement       (resetHeader, resetInput);
     formatElement       (resetBtn, {}, [], { type: "button" });
@@ -136,11 +136,11 @@ function renderMessageCard(container, msg, schoolId, classId) {
     
     insertElement       (container, card);
     insertElement       (card, msgHeader);
-    addNewElement    (msgHeader, "span", ["muted"], timeStr);
+    addNewElement       (msgHeader, "span", ["muted"], timeStr);
     formatElement       (deleteBtn, {}, [], { type: "button" });
     insertElement       (msgHeader, deleteBtn);
     enableDeleteBtn     (deleteBtn, msg.id, card, schoolId, classId);
-    addNewElement    (card, "p", ["message-text"], msg.text);
+    addNewElement       (card, "p", ["message-text"], msg.text);
 }
 
 /* Handles the deletion of a message, including optimistic UI update and error handling */
@@ -148,8 +148,8 @@ async function handleDeleteMessage(messageId, card, schoolId, classId) {
     if (!confirm("Delete this message?")) return; // Confirmation dialog before deletion
 
     // Optimistic UI: remove from DOM immediately
-    card.style.opacity = "0.4";
-    card.style.pointerEvents = "none";
+    card.style.opacity          = "0.4";
+    card.style.pointerEvents    = "none";
 
     try {
         const msgRef = doc(db, "schools", schoolId, "classes", classId, "messages", messageId);
@@ -158,22 +158,22 @@ async function handleDeleteMessage(messageId, card, schoolId, classId) {
         card.remove();
 
         // Update count
-        const counter   = document.getElementById("msg-count");
-        const remaining = document.querySelectorAll("#msg-list .message-card").length;
+        const counter       = document.getElementById("msg-count");
+        const remaining     = document.querySelectorAll("#msg-list .message-card").length;
         counter.textContent = remaining;
 
         if (remaining === 0) {
-            const msgList = document.getElementById("msg-list");
-            const placeholder = createElement("p", ["muted"], "No messages yet.");
-            insertElement(msgList, placeholder);
-            formatElement(placeholder, { fontStyle: "italic" });
+            const msgList       = document.getElementById("msg-list");
+            const placeholder   = createElement("p", ["muted"], "No messages yet.");
+            insertElement       (msgList, placeholder);
+            formatElement       (placeholder, { fontStyle: "italic" });
         }
     } catch (err) {
         // Revert optimistic UI on failure
-        console.error("Failed to delete message:", err);
-        card.style.opacity = "1";
-        card.style.pointerEvents = "auto";
-        alert("Failed to delete message.");
+        console.error               ("Failed to delete message:", err);
+        card.style.opacity          = "1";
+        card.style.pointerEvents    = "auto";
+        alert                       ("Failed to delete message.");
     }
 }
 
@@ -191,22 +191,22 @@ function enableCopyBtn(copyBtn, feedbackUrl) {
 function enableResetBtn(resetBtn, resetInput, resetPasswordSection) {
 
     resetBtn.addEventListener("click", async () => {
-        const newPassword = resetInput.value.trim();
+        const newPassword       = resetInput.value.trim();
         if (!newPassword) {
-            alert("Please enter a new feedback password.");
+            alert               ("Please enter a new feedback password.");
             return;
         }
         try {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
-            alert("Feedback password reset successfully.");
-            resetInput.value = "";
-            addNewElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
-            addNewElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
-            addNewElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
+            alert               ("Feedback password reset successfully.");
+            resetInput.value    = "";
+            addNewElement       (resetPasswordSection, "p", [], "Feedback password has been changed.");
+            addNewElement       (resetPasswordSection, "p", [], `New password: ${newPassword}.`);
+            addNewElement       (resetPasswordSection, "p", [], "Share this password with your classmates.");
 
         } catch (err) {
-            console.error("Error resetting feedback password:", err);
-            alert("Failed to reset feedback password.");
+            console.error       ("Error resetting feedback password:", err);
+            alert               ("Failed to reset feedback password.");
         }
     });
 }
