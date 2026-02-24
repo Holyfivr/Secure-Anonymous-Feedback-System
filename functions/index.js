@@ -106,6 +106,9 @@ exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
   if (!schoolId) {
     throw new HttpsError("invalid-argument", "Missing schoolId.");
   }
+
+  await assertSchoolActive(schoolId);
+
   const snapshot = await db.collection("schools").doc(schoolId)
       .collection("classes").where("active", "==", true).get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
@@ -119,6 +122,9 @@ exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
   if (!schoolId || !classId) {
     throw new HttpsError("invalid-argument", "Missing schoolId or classId.");
   }
+
+  await assertSchoolActive(schoolId);
+
   const classDoc = await db.collection("schools").doc(schoolId)
       .collection("classes").doc(classId).get();
   if (!classDoc.exists || !classDoc.data().active) {
@@ -237,6 +243,9 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"},
   if (!schoolId || !classId || !text || !password) {
     throw new HttpsError("invalid-argument", "Missing fields.");
   }
+
+  await assertSchoolActive(schoolId);
+
   if (text.length > 500) {
     throw new HttpsError("invalid-argument", "Message too long (max 500 chars).");
   }
@@ -495,3 +504,11 @@ exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
 
   throw new HttpsError("permission-denied", "Insufficient permissions.");
 });
+
+/* Helper function to prevent classes in an inactive school from being accessed through direct links. */
+async function assertSchoolActive(schoolId) {
+  const schoolDoc = await db.collection("schools").doc(schoolId).get();
+  if (!schoolDoc.exists || !schoolDoc.data().active) {
+    throw new HttpsError("not-found", "School not found or inactive.");
+  }
+}

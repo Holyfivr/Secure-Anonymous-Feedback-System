@@ -1,4 +1,4 @@
-import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
+import { createElement, createInput, showSpinner, hideSpinner, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml, sendPasswordResetEmail }
     from "./firebase-config.mjs";
@@ -15,38 +15,48 @@ export async function renderSuperadminPage() {
 }
 
 function renderDashboard() {
-    const wrapper = createElement(root, "div", ["dashboard"]);
+    const wrapper = createElement("div", ["dashboard"]);
+    insertElement(root, wrapper);
 
     // Header
-    const header = createElement(wrapper, "div", ["dashboard-header"]);
-    createElement(header, "h2", [], "Superadmin");
+    const header = createElement("div", ["dashboard-header"]);
+    insertElement(wrapper, header);
+    insertNewElement(header, "h2", [], "Superadmin");
 
     // Create school section
-    const createSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    createElement(createSection, "h3", [], "Create school");
+    const createSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, createSection);
+    insertNewElement(createSection, "h3", [], "Create school");
 
-    const form = createElement(createSection, "form", []);
+    const form = createElement("form", []);
+    insertElement(createSection, form);
     form.addEventListener("submit", handleCreateSchool);
 
-    const nameGroup = createElement(form, "div", ["form-group"]);
-    createElement(nameGroup, "label", [], "School name");
+    const nameGroup = createElement("div", ["form-group"]);
+    insertElement(form, nameGroup);
+    insertNewElement(nameGroup, "label", [], "School name");
     createInput(nameGroup, "text", "school-name", "e.g. Harvard University", required);
 
-    const emailGroup = createElement(form, "div", ["form-group"]);
-    createElement(emailGroup, "label", [], "Admin email");
+    const emailGroup = createElement("div", ["form-group"]);
+    insertElement(form, emailGroup);
+    insertNewElement(emailGroup, "label", [], "Admin email");
     createInput(emailGroup, "email", "school-admin-email", "admin@school.com", required);
 
-    const errorMsg = createElement(form, "div", ["error-text"]);
-    errorMsg.id = "create-school-error";
+    const errorMsg = createElement("div", ["error-text"]);
+    formatElement(errorMsg, {}, [], { id: "create-school-error" });
+    insertElement(form, errorMsg);
 
-    const submitBtn = createElement(form, "button", [], "Create");
-    submitBtn.type = "submit";
+    const submitBtn = createElement("button", [], "Create");
+    formatElement(submitBtn, {}, [], { type: "submit" });
+    insertElement(form, submitBtn);
 
     // Schools list
-    const listSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    createElement(listSection, "h3", [], "Schools");
-    const schoolList = createElement(listSection, "div", ["item-list"]);
-    schoolList.id = "school-list";
+    const listSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, listSection);
+    insertNewElement(listSection, "h3", [], "Schools");
+    const schoolList = createElement("div", ["item-list"]);
+    formatElement(schoolList, {}, [], { id: "school-list" });
+    insertElement(listSection, schoolList);
 
     loadSchools(schoolList);
 }
@@ -111,36 +121,45 @@ async function loadSchools(container) {
         hideSpinner(container);
 
         if (snapshot.empty) {
-            const placeholder = createElement(container, "p", ["muted"], "No schools yet.");
-            placeholder.style.fontStyle = "italic";
+            const placeholder = insertNewElement(container, "p", ["muted"], "No schools yet.");
+            formatElement(placeholder, { fontStyle: "italic" });
             return;
         }
         snapshot.forEach((doc) => {
             const data = doc.data();
-            const item = createElement(container, "div", ["school-item"]);
+            const item = createElement("div", ["school-item"]);
+            insertElement(container, item);
 
-            const row = createElement(item, "div", ["item-row"]);
-            createElement(row, "span", [], data.name);
+            const row = createElement("div", ["item-row"]);
+            insertElement(item, row);
+            insertNewElement(row, "span", [], data.name);
 
-            const actions = createElement(row, "div", ["item-actions"]);
+            const actions = createElement("div", ["item-actions"]);
+            insertElement(row, actions);
 
             // Toggle active/inactive
-            const toggleBtn = createElement(actions, "button", ["btn-small", data.active ? "btn-active" : "btn-inactive"], data.active ? "Active" : "Inactive");
+            const toggleBtn = createElement("button", ["btn-small", data.active ? "btn-active" : "btn-inactive"], data.active ? "Active" : "Inactive");
+            formatElement(toggleBtn, {}, [], { type: "button" });
+            insertElement(actions, toggleBtn);
             toggleBtn.addEventListener("click", () => handleToggleSchool(doc.id, container));
 
             // View classes
-            const viewBtn = createElement(actions, "button", ["btn-small"], "View classes");
+            const viewBtn = createElement("button", ["btn-small"], "View classes");
+            formatElement(viewBtn, {}, [], { type: "button" });
+            insertElement(actions, viewBtn);
             viewBtn.addEventListener("click", () => handleViewClasses(doc.id, item, viewBtn));
 
             // Delete (only inactive)
             if (!data.active) {
-                const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+                const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
+                formatElement(deleteBtn, {}, [], { type: "button" });
+                insertElement(actions, deleteBtn);
                 deleteBtn.addEventListener("click", () => handleDeleteSchool(doc.id, data.name, container));
             }
         });
     } catch (err) {
         hideSpinner(container);
-        createElement(container, "p", ["error-text"], "Failed to load schools.");
+        insertNewElement(container, "p", ["error-text"], "Failed to load schools.");
     }
 }
 
@@ -174,7 +193,8 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
     }
 
     viewBtn.textContent = "Hide classes";
-    const subList = createElement(schoolItem, "div", ["sub-list"]);
+    const subList = createElement("div", ["sub-list"]);
+    insertElement(schoolItem, subList);
     showSpinner(subList);
 
     try {
@@ -185,21 +205,22 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
         const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
         if (classes.length === 0) {
-            const p = createElement(subList, "p", ["muted"], "No classes.");
-            p.style.fontStyle = "italic";
+            const p = insertNewElement(subList, "p", ["muted"], "No classes.");
+            formatElement(p, { fontStyle: "italic" });
             return;
         }
 
         classes.forEach((cls) => {
-            const row = createElement(subList, "div", ["sub-item"]);
-            createElement(row, "span", [], cls.name);
+            const row = createElement("div", ["sub-item"]);
+            insertElement(subList, row);
+            insertNewElement(row, "span", [], cls.name);
 
             const badgeClasses = ["badge"];
             if (!cls.active) badgeClasses.push("badge-inactive");
-            createElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
+            insertNewElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
         });
     } catch (err) {
         hideSpinner(subList);
-        createElement(subList, "p", ["error-text"], "Failed to load classes.");
+        insertNewElement(subList, "p", ["error-text"], "Failed to load classes.");
     }
 }

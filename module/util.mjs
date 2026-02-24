@@ -7,7 +7,6 @@ export async function resetPassword(e) {
     const loggedInUser = localStorage.getItem("currentUser");
     if (loggedInUser) {
         const user = JSON.parse(loggedInUser);
-        console.log("Logged in user:", user);
     }
 
     const email     = document.getElementById("login-email").value;

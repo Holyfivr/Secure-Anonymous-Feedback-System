@@ -1,4 +1,4 @@
-import { createElement, createInput, showSpinner, hideSpinner } from "./dom-helper.mjs";
+import { createElement, createInput, showSpinner, hideSpinner, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs, sendPasswordResetEmail }
     from "./firebase-config.mjs";
@@ -16,42 +16,56 @@ export async function renderSchooladminPage() {
 }
 
 function renderDashboard(schoolId) {
-    const wrapper = createElement(root, "div", ["dashboard"]);
+    const wrapper = createElement("div", ["dashboard"]);
+    insertElement(root, wrapper);
 
     // Header
-    const header = createElement(wrapper, "div", ["dashboard-header"]);
-    createElement(header, "h2", [], "School Admin");
+    const header = createElement("div", ["dashboard-header"]);
+    insertElement(wrapper, header);
+    insertNewElement(header, "h2", [], "School Admin");
 
     // Create class section
-    const createSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    createElement(createSection, "h3", [], "Create class");
+    const createSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, createSection);
+    insertNewElement(createSection, "h3", [], "Create class");
 
-    const form = createElement(createSection, "form", []);
+    const form = createElement("form", []);
+    insertElement(createSection, form);
     form.addEventListener("submit", (e) => handleCreateClass(e, schoolId));
 
-    const nameGroup = createElement(form, "div", ["form-group"]);
-    createElement(nameGroup, "label", [], "Class name");
+    const nameGroup = createElement("div", ["form-group"]);
+    insertElement(form, nameGroup);
+    insertNewElement(nameGroup, "label", [], "Class name");
     createInput(nameGroup, "text", "class-name", "e.g. Math 101", required);
 
-    const emailGroup = createElement(form, "div", ["form-group"]);
-    createElement(emailGroup, "label", [], "Rep email");
+    const emailGroup = createElement("div", ["form-group"]);
+    insertElement(form, emailGroup);
+    insertNewElement(emailGroup, "label", [], "Rep email");
     createInput(emailGroup, "email", "class-admin-email", "rep@school.com", required);
 
-    const errorMsg = createElement(form, "div", ["error-text"]);
-    errorMsg.id = "create-class-error";
+    const errorMsg = createElement("div", ["error-text"]);
+    formatElement(errorMsg, {}, [], { id: "create-class-error" });
+    insertElement(form, errorMsg);
 
-    const submitBtn = createElement(form, "button", [], "Create");
-    submitBtn.type = "submit";
+    const submitBtn = createElement("button", [], "Create");
+    formatElement(submitBtn, {}, [], { type: "submit" });
+    insertElement(form, submitBtn);
 
     // Classes list
-    const listSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    const listHeader = createElement(listSection, "div", ["dashboard-header"]);
-    createElement(listHeader, "h3", [], "Classes");
-    const countBadge = createElement(listHeader, "span", ["badge"], "…");
-    countBadge.id = "class-count";
+    const listSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, listSection);
 
-    const classList = createElement(listSection, "div", ["item-list"]);
-    classList.id = "class-list";
+    const listHeader = createElement("div", ["dashboard-header"]);
+    insertElement(listSection, listHeader);
+    insertNewElement(listHeader, "h3", [], "Classes");
+
+    const countBadge = createElement("span", ["badge"], "…");
+    formatElement(countBadge, {}, [], { id: "class-count" });
+    insertElement(listHeader, countBadge);
+
+    const classList = createElement("div", ["item-list"]);
+    formatElement(classList, {}, [], { id: "class-list" });
+    insertElement(listSection, classList);
 
     loadClasses(classList, schoolId);
 }
@@ -123,30 +137,36 @@ async function loadClasses(container, schoolId) {
         countEl.textContent = classes.length;
 
         if (classes.length === 0) {
-            const placeholder = createElement(container, "p", ["muted"], "No classes yet.");
-            placeholder.style.fontStyle = "italic";
+            const placeholder = insertNewElement(container, "p", ["muted"], "No classes yet.");
+            formatElement(placeholder, { fontStyle: "italic" });
             return;
         }
 
         classes.forEach((cls) => {
-            const row = createElement(container, "div", ["item-row"]);
-            createElement(row, "span", [], cls.name);
+            const row = createElement("div", ["item-row"]);
+            insertElement(container, row);
+            insertNewElement(row, "span", [], cls.name);
 
-            const actions = createElement(row, "div", ["item-actions"]);
+            const actions = createElement("div", ["item-actions"]);
+            insertElement(row, actions);
 
             // Toggle active/inactive button
-            const toggleBtn = createElement(actions, "button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
+            const toggleBtn = createElement("button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
+            formatElement(toggleBtn, {}, [], { type: "button" });
+            insertElement(actions, toggleBtn);
             toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
 
             // Delete button — only for inactive classes
             if (!cls.active) {
-                const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+                const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
+                formatElement(deleteBtn, {}, [], { type: "button" });
+                insertElement(actions, deleteBtn);
                 deleteBtn.addEventListener("click", () => handleDeleteClass(cls.id, cls.name, schoolId));
             }
         });
     } catch (err) {
         hideSpinner(container);
-        createElement(container, "p", ["error-text"], "Failed to load classes.");
+        insertNewElement(container, "p", ["error-text"], "Failed to load classes.");
     }
 }
 
@@ -156,16 +176,18 @@ async function handleToggleClass(classId, schoolId, toggleBtn, row) {
     toggleBtn.textContent = wasActive ? "Inactive" : "Active";
     toggleBtn.classList.toggle("btn-active", !wasActive);
     toggleBtn.classList.toggle("btn-inactive", wasActive);
-    toggleBtn.disabled = true;
+    formatElement(toggleBtn, {}, [], { disabled: true });
 
     try {
         await fn.toggleActive({ schoolId, classId });
-        toggleBtn.disabled = false;
+        formatElement(toggleBtn, {}, [], { disabled: false });
 
         // If we just deactivated, add a delete button; if activated, remove it
         if (wasActive) {
             const actions = row.querySelector(".item-actions");
-            const deleteBtn = createElement(actions, "button", ["btn-danger", "btn-small"], "Delete");
+            const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
+            formatElement(deleteBtn, {}, [], { type: "button" });
+            insertElement(actions, deleteBtn);
             deleteBtn.addEventListener("click", () => {
                 const name = row.querySelector("span").textContent;
                 handleDeleteClass(classId, name, schoolId);
@@ -179,7 +201,7 @@ async function handleToggleClass(classId, schoolId, toggleBtn, row) {
         toggleBtn.textContent = wasActive ? "Active" : "Inactive";
         toggleBtn.classList.toggle("btn-active", wasActive);
         toggleBtn.classList.toggle("btn-inactive", !wasActive);
-        toggleBtn.disabled = false;
+        formatElement(toggleBtn, {}, [], { disabled: false });
         alert(err.message || "Failed to toggle class.");
     }
 }
