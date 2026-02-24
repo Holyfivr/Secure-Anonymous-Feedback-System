@@ -1,4 +1,4 @@
-import { createElement } from "./dom-helper.mjs";
+import { createElement, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
 import { signOut, auth } from "./firebase-config.mjs";
 const root = document.getElementById("root");
 
@@ -7,31 +7,35 @@ export function renderLandingPage() {
   renderNavBar(root);
 }
 
-const navLinks = `
-        <a href="#/home">Home</a>
-        <a href="#/privacy">Privacy</a>
-        <a href="#/feedback">Send feedback</a>
-        `;
+const navLinks = [
+    { href: "#/home", text: "Home" },
+    { href: "#/privacy", text: "Privacy" },
+    { href: "#/feedback", text: "Send feedback" },
+];
 
 export function renderNavBar(parent, loggedIn) {
-  const nav = createElement(parent, "nav", ["navbar"]);
-  createElement(nav, "div", ["logo"], "S A F S");
-  const navBar = createElement(nav, "div", ["nav-links"]);
+  const nav = createElement("nav", ["navbar"]);
+  insertElement(parent, nav);
+  insertNewElement(nav, "div", ["logo"], "S A F S");
+
+  const navBar = createElement("div", ["nav-links"]);
+  insertElement(nav, navBar);
+
+  navLinks.forEach((link) => {
+    const anchor = createElement("a", [], link.text);
+    formatElement(anchor, {}, [], { href: link.href });
+    insertElement(navBar, anchor);
+  });
+
   if (loggedIn) {
-    navBar.innerHTML = `
-        ${navLinks}
-        ${createElement(navBar, "a", ["btn-danger"], "Log out").outerHTML}
-    `;
-
-    const logoutBtn = navBar.querySelector("a.btn-danger");
+    const logoutBtn = createElement("a", ["btn-danger"], "Log out");
+    insertElement(navBar, logoutBtn);
     addLogoutButton(logoutBtn);
-
   } else {
-  navBar.innerHTML = `
-        ${navLinks}
-        <a href="#/login">Log in</a>
-    `;
-    }
+    const loginBtn = createElement("a", [], "Log in");
+    formatElement(loginBtn, {}, [], { href: "#/login" });
+    insertElement(navBar, loginBtn);
+  }
   return nav;
 }
 

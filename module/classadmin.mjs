@@ -1,4 +1,4 @@
-import { createElement, showSpinner, hideSpinner } from "./dom-helper.mjs";
+import { createElement, showSpinner, hideSpinner, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
@@ -23,34 +23,53 @@ export async function renderClassadminPage() {
 }
 
 async function renderDashboard(schoolId, classId) {
-    const wrapper = createElement(root, "div", ["dashboard"]);
+    const wrapper = createElement("div", ["dashboard"]);
+    insertElement(root, wrapper);
 
     // Header
-    const header = createElement(wrapper, "div", ["dashboard-header"]);
-    createElement(header, "h2", [], "Class Rep");
+    const header = createElement("div", ["dashboard-header"]);
+    insertElement(wrapper, header);
+    insertNewElement(header, "h2", [], "Class Rep");
 
     // Feedback link (renders instantly, no server call)
-    const linkSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    createElement(linkSection, "h3", [], "Feedback link");
+    const linkSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, linkSection);
+    insertNewElement(linkSection, "h3", [], "Feedback link");
+
     const feedbackUrl = `${window.location.origin}${window.location.pathname}#/feedback/${schoolId}/${classId}`;
-    const urlRow = createElement(linkSection, "div", ["url-row"]);
-    createElement(urlRow, "code", ["url-text"], feedbackUrl);
-    const copyBtn = createElement(urlRow, "button", ["btn-small"], "Copy");
+    const urlRow = createElement("div", ["url-row"]);
+    insertElement(linkSection, urlRow);
+    insertNewElement(urlRow, "code", ["url-text"], feedbackUrl);
+
+    const copyBtn = createElement("button", ["btn-small"], "Copy");
+    formatElement(copyBtn, {}, [], { type: "button" });
+    insertElement(urlRow, copyBtn);
+
     copyBtn.addEventListener("click", () => {
         navigator.clipboard.writeText(feedbackUrl);
         copyBtn.textContent = "Copied!";
         setTimeout(() => { copyBtn.textContent = "Copy"; }, 2000);
     });
-    createElement(linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+    insertNewElement(linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
    
    
-    const resetPasswordSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    const resetHeader = createElement(resetPasswordSection, "div", ["dashboard-header"]);
-    createElement(resetHeader, "p", [], "Reset feedback password");
-    createElement(resetHeader, "input", ["input-small", "reset-post-password"], "");
-    const resetBtn = createElement(resetHeader, "button", ["btn-small"], "Reset");
+    const resetPasswordSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, resetPasswordSection);
+
+    const resetHeader = createElement("div", ["dashboard-header"]);
+    insertElement(resetPasswordSection, resetHeader);
+    insertNewElement(resetHeader, "p", [], "Reset feedback password");
+
+    const resetInput = createElement("input", ["input-small", "reset-post-password"]);
+    formatElement(resetInput, {}, [], { type: "text" });
+    insertElement(resetHeader, resetInput);
+
+    const resetBtn = createElement("button", ["btn-small"], "Reset");
+    formatElement(resetBtn, {}, [], { type: "button" });
+    insertElement(resetHeader, resetBtn);
+
     resetBtn.addEventListener("click", async () => {
-        const newPassword = resetHeader.querySelector(".reset-post-password").value.trim();
+        const newPassword = resetInput.value.trim();
         if (!newPassword) {
             alert("Please enter a new feedback password.");
             return;
@@ -58,10 +77,10 @@ async function renderDashboard(schoolId, classId) {
         try {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
             alert("Feedback password reset successfully.");
-            resetHeader.querySelector(".reset-post-password").value = "";
-            createElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
-            createElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
-            createElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
+            resetInput.value = "";
+            insertNewElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
+            insertNewElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
+            insertNewElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
 
         } catch (err) {
             console.error("Error resetting feedback password:", err);
@@ -71,14 +90,22 @@ async function renderDashboard(schoolId, classId) {
 
 
     // Messages section (with loading indicator)
-    const msgSection = createElement(wrapper, "div", ["card", "dashboard-section"]);
-    const msgHeader = createElement(msgSection, "div", ["dashboard-header"]);
-    const msgTitle = createElement(msgHeader, "h3", [], "Messages");
-    const countBadge = createElement(msgHeader, "span", ["badge"], "…");
-    countBadge.id = "msg-count";
+    const msgSection = createElement("div", ["card", "dashboard-section"]);
+    insertElement(wrapper, msgSection);
 
-    const msgList = createElement(msgSection, "div", ["item-list"]);
-    msgList.id = "msg-list";
+    const msgHeader = createElement("div", ["dashboard-header"]);
+    insertElement(msgSection, msgHeader);
+
+    const msgTitle = createElement("h3", [], "Messages");
+    insertElement(msgHeader, msgTitle);
+
+    const countBadge = createElement("span", ["badge"], "…");
+    formatElement(countBadge, {}, [], { id: "msg-count" });
+    insertElement(msgHeader, countBadge);
+
+    const msgList = createElement("div", ["item-list"]);
+    formatElement(msgList, {}, [], { id: "msg-list" });
+    insertElement(msgSection, msgList);
     showSpinner(msgList);
 
     // Load class name (direct Firestore read) + messages (Cloud Function) IN PARALLEL
@@ -106,8 +133,8 @@ async function loadMessages(container, schoolId, classId) {
         countEl.textContent = messages.length;
 
         if (messages.length === 0) {
-            const placeholder = createElement(container, "p", ["muted"], "No messages yet.");
-            placeholder.style.fontStyle = "italic";
+            const placeholder = insertNewElement(container, "p", ["muted"], "No messages yet.");
+            formatElement(placeholder, { fontStyle: "italic" });
             return;
         }
 
@@ -116,26 +143,30 @@ async function loadMessages(container, schoolId, classId) {
         });
     } catch (err) {
         hideSpinner(container);
-        createElement(container, "p", ["error-text"], "Failed to load messages.");
+        insertNewElement(container, "p", ["error-text"], "Failed to load messages.");
         console.error("Error loading messages:", err);
     }
 }
 
 function renderMessageCard(container, msg, schoolId, classId) {
-    const card = createElement(container, "div", ["message-card"]);
+    const card = createElement("div", ["message-card"]);
+    insertElement(container, card);
     card.dataset.messageId = msg.id;
 
-    const msgHeader = createElement(card, "div", ["message-header"]);
+    const msgHeader = createElement("div", ["message-header"]);
+    insertElement(card, msgHeader);
     const time = msg.createdAt ? new Date(msg.createdAt) : null;
     const timeStr = time
         ? time.toLocaleDateString("sv-SE") + " " + time.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
         : "Unknown time";
-    createElement(msgHeader, "span", ["muted"], timeStr);
+    insertNewElement(msgHeader, "span", ["muted"], timeStr);
 
-    const deleteBtn = createElement(msgHeader, "button", ["btn-danger", "btn-small"], "Delete");
+    const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
+    formatElement(deleteBtn, {}, [], { type: "button" });
+    insertElement(msgHeader, deleteBtn);
     deleteBtn.addEventListener("click", () => handleDeleteMessage(msg.id, card, schoolId, classId));
 
-    createElement(card, "p", ["message-text"], msg.text);
+    insertNewElement(card, "p", ["message-text"], msg.text);
 }
 
 async function handleDeleteMessage(messageId, cardEl, schoolId, classId) {
@@ -158,8 +189,8 @@ async function handleDeleteMessage(messageId, cardEl, schoolId, classId) {
 
         if (remaining === 0) {
             const msgList = document.getElementById("msg-list");
-            const placeholder = createElement(msgList, "p", ["muted"], "No messages yet.");
-            placeholder.style.fontStyle = "italic";
+            const placeholder = insertNewElement(msgList, "p", ["muted"], "No messages yet.");
+            formatElement(placeholder, { fontStyle: "italic" });
         }
     } catch (err) {
         // Revert optimistic UI on failure

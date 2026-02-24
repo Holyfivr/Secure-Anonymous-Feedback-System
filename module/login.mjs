@@ -1,4 +1,4 @@
-import { createElement, createInput } from "./dom-helper.mjs";
+import { createElement, createInput, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, signInWithEmailAndPassword, signOut } from "./firebase-config.mjs";
 import { resetPassword, redirectIfLoggedIn } from "./util.mjs";
@@ -13,31 +13,41 @@ export function renderLoginPage() {
 }
 
 function renderLoginForm() {
-    const wrapper = createElement(root, "div", ["page-wrapper"]);
-    const card = createElement(wrapper, "div", ["card"]);
+    const wrapper = createElement("div", ["page-wrapper"]);
+    const card = createElement("div", ["card"]);
+    const form = createElement("form", ["login-form"]);
 
-    createElement(card, "h2", [], "Log in");
+    insertElement(root, wrapper);
+    insertElement(wrapper, card);
+    insertNewElement(card, "h2", [], "Log in");
+    insertElement(card, form);
 
-    const form = createElement(card, "form", ["login-form"]);
     form.addEventListener("submit", handleLogin);
 
-    const emailDiv = createElement(form, "div", ["form-group"]);
-    createElement(emailDiv, "label", [], "Email");
+    const emailDiv = createElement("div", ["form-group"]);
+    insertElement(form, emailDiv);
+    insertNewElement(emailDiv, "label", [], "Email");
     createInput(emailDiv, "email", "login-email", "name@domain.com", required);
 
-    const passDiv = createElement(form, "div", ["form-group"]);
-    createElement(passDiv, "label", [], "Password");
+    const passDiv = createElement("div", ["form-group"]);
+    insertElement(form, passDiv);
+    insertNewElement(passDiv, "label", [], "Password");
     createInput(passDiv, "password", "login-password", "••••••••••••", required);
 
-    const errorMsg = createElement(form, "div", ["error-text"]);
-    errorMsg.id = "login-error";
+    const errorMsg = createElement("div", ["error-text"]);
+    formatElement(errorMsg, {}, [], { id: "login-error" });
+    insertElement(form, errorMsg);
 
-    const btn = createElement(form, "button", [], "Log in");
-    btn.type = "submit";
+    const btn = createElement("button", [], "Log in");
+    formatElement(btn, {}, [], { type: "submit" });
+    insertElement(form, btn);
 
-    const forgotLink = createElement(card, "p", ["forgot-password"]);
-    forgotLink.innerHTML = `<a href="#" id="forgot-password-link">Forgot password?</a>`;
-    forgotLink.querySelector("a").addEventListener("click", resetPassword);
+    const forgotLink = createElement("p", ["forgot-password"]);
+    insertElement(card, forgotLink);
+    const forgotAnchor = createElement("a", [], "Forgot password?", "forgot-password-link");
+    formatElement(forgotAnchor, {}, [], { href: "#" });
+    insertElement(forgotLink, forgotAnchor);
+    forgotAnchor.addEventListener("click", resetPassword);
 }
 
 async function handleLogin(e) {
