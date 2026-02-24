@@ -1,4 +1,4 @@
-import { createElement, createInput, showSpinner, hideSpinner, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
+import { createElement, createInput, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml, sendPasswordResetEmail }
     from "./firebase-config.mjs";
@@ -21,12 +21,12 @@ function renderDashboard() {
     // Header
     const header = createElement("div", ["dashboard-header"]);
     insertElement(wrapper, header);
-    insertNewElement(header, "h2", [], "Superadmin");
+    addNewElement(header, "h2", [], "Superadmin");
 
     // Create school section
     const createSection = createElement("div", ["card", "dashboard-section"]);
     insertElement(wrapper, createSection);
-    insertNewElement(createSection, "h3", [], "Create school");
+    addNewElement(createSection, "h3", [], "Create school");
 
     const form = createElement("form", []);
     insertElement(createSection, form);
@@ -34,12 +34,12 @@ function renderDashboard() {
 
     const nameGroup = createElement("div", ["form-group"]);
     insertElement(form, nameGroup);
-    insertNewElement(nameGroup, "label", [], "School name");
+    addNewElement(nameGroup, "label", [], "School name");
     createInput(nameGroup, "text", "school-name", "e.g. Harvard University", required);
 
     const emailGroup = createElement("div", ["form-group"]);
     insertElement(form, emailGroup);
-    insertNewElement(emailGroup, "label", [], "Admin email");
+    addNewElement(emailGroup, "label", [], "Admin email");
     createInput(emailGroup, "email", "school-admin-email", "admin@school.com", required);
 
     const errorMsg = createElement("div", ["error-text"]);
@@ -53,7 +53,7 @@ function renderDashboard() {
     // Schools list
     const listSection = createElement("div", ["card", "dashboard-section"]);
     insertElement(wrapper, listSection);
-    insertNewElement(listSection, "h3", [], "Schools");
+    addNewElement(listSection, "h3", [], "Schools");
     const schoolList = createElement("div", ["item-list"]);
     formatElement(schoolList, {}, [], { id: "school-list" });
     insertElement(listSection, schoolList);
@@ -121,7 +121,7 @@ async function loadSchools(container) {
         hideSpinner(container);
 
         if (snapshot.empty) {
-            const placeholder = insertNewElement(container, "p", ["muted"], "No schools yet.");
+            const placeholder = addNewElement(container, "p", ["muted"], "No schools yet.");
             formatElement(placeholder, { fontStyle: "italic" });
             return;
         }
@@ -132,7 +132,7 @@ async function loadSchools(container) {
 
             const row = createElement("div", ["item-row"]);
             insertElement(item, row);
-            insertNewElement(row, "span", [], data.name);
+            addNewElement(row, "span", [], data.name);
 
             const actions = createElement("div", ["item-actions"]);
             insertElement(row, actions);
@@ -159,7 +159,7 @@ async function loadSchools(container) {
         });
     } catch (err) {
         hideSpinner(container);
-        insertNewElement(container, "p", ["error-text"], "Failed to load schools.");
+        addNewElement(container, "p", ["error-text"], "Failed to load schools.");
     }
 }
 
@@ -205,7 +205,7 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
         const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
 
         if (classes.length === 0) {
-            const p = insertNewElement(subList, "p", ["muted"], "No classes.");
+            const p = addNewElement(subList, "p", ["muted"], "No classes.");
             formatElement(p, { fontStyle: "italic" });
             return;
         }
@@ -213,14 +213,14 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
         classes.forEach((cls) => {
             const row = createElement("div", ["sub-item"]);
             insertElement(subList, row);
-            insertNewElement(row, "span", [], cls.name);
+            addNewElement(row, "span", [], cls.name);
 
             const badgeClasses = ["badge"];
             if (!cls.active) badgeClasses.push("badge-inactive");
-            insertNewElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
+            addNewElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
         });
     } catch (err) {
         hideSpinner(subList);
-        insertNewElement(subList, "p", ["error-text"], "Failed to load classes.");
+        addNewElement(subList, "p", ["error-text"], "Failed to load classes.");
     }
 }

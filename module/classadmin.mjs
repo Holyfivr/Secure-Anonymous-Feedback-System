@@ -1,4 +1,4 @@
-import { createElement, showSpinner, hideSpinner, insertElement, insertNewElement, formatElement } from "./dom-helper.mjs";
+import { createElement, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
@@ -36,12 +36,12 @@ async function renderDashboard(schoolId, classId) {
     const copyBtn       = createElement("button", ["btn-small"], "Copy");
 
     insertElement       (wrapper, linkSection);
-    insertNewElement    (linkSection, "h3", [], "Feedback link");
+    addNewElement    (linkSection, "h3", [], "Feedback link");
     insertElement       (linkSection, urlRow);
-    insertNewElement    (urlRow, "code", ["url-text"], feedbackUrl);
+    addNewElement    (urlRow, "code", ["url-text"], feedbackUrl);
     formatElement       (copyBtn, {}, [], { type: "button" });
     insertElement       (urlRow, copyBtn);
-    insertNewElement    (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+    addNewElement    (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
     enableCopyBtn       (copyBtn, feedbackUrl);
    
 
@@ -53,7 +53,7 @@ async function renderDashboard(schoolId, classId) {
 
     insertElement       (wrapper, resetPasswordSection);
     insertElement       (resetPasswordSection, resetHeader);
-    insertNewElement    (resetHeader, "p", [], "Reset feedback password");
+    addNewElement    (resetHeader, "p", [], "Reset feedback password");
     formatElement       (resetInput, {}, [], { type: "text" });
     insertElement       (resetHeader, resetInput);
     formatElement       (resetBtn, {}, [], { type: "button" });
@@ -136,11 +136,11 @@ function renderMessageCard(container, msg, schoolId, classId) {
     
     insertElement       (container, card);
     insertElement       (card, msgHeader);
-    insertNewElement    (msgHeader, "span", ["muted"], timeStr);
+    addNewElement    (msgHeader, "span", ["muted"], timeStr);
     formatElement       (deleteBtn, {}, [], { type: "button" });
     insertElement       (msgHeader, deleteBtn);
     enableDeleteBtn     (deleteBtn, msg.id, card, schoolId, classId);
-    insertNewElement    (card, "p", ["message-text"], msg.text);
+    addNewElement    (card, "p", ["message-text"], msg.text);
 }
 
 /* Handles the deletion of a message, including optimistic UI update and error handling */
@@ -200,9 +200,9 @@ function enableResetBtn(resetBtn, resetInput, resetPasswordSection) {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
             alert("Feedback password reset successfully.");
             resetInput.value = "";
-            insertNewElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
-            insertNewElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
-            insertNewElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
+            addNewElement(resetPasswordSection, "p", [], "Feedback password has been changed.");
+            addNewElement(resetPasswordSection, "p", [], `New password: ${newPassword}.`);
+            addNewElement(resetPasswordSection, "p", [], "Share this password with your classmates.");
 
         } catch (err) {
             console.error("Error resetting feedback password:", err);
