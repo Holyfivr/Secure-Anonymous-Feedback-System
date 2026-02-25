@@ -6,86 +6,91 @@ import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs, se
 const root = document.getElementById("root");
 const required = true;
 
+/* ========================================== */
+// PAGE #/schooladmin
+/* ========================================== */
 export async function renderSchooladminPage() {
-    const token = await requireAuth("schooladmin");
-    if (!token) return;
+    const token             = await requireAuth("schooladmin");
+    if (!token)             return;
 
-    root.innerHTML = "";
-    renderNavBar(root, true);
-    renderDashboard(token.claims.schoolId);
+    root.innerHTML          = "";
+    renderNavBar            (root, true);
+    renderDashboard         (token.claims.schoolId);
 }
 
 function renderDashboard(schoolId) {
-    const wrapper = createElement("div", ["dashboard"]);
-    insertElement(root, wrapper);
+    const wrapper           = createElement("div", ["dashboard"]);
+    const header            = createElement("div", ["dashboard-header"]);
+    const createSection     = createElement("div", ["card", "dashboard-section"]);
+    const form              = createElement("form", []);
+    const nameGroup         = createElement("div", ["form-group"]);
+    const emailGroup        = createElement("div", ["form-group"]);
+    const errorMsg          = createElement("div", ["error-text"]);
+    const submitBtn         = createElement("button", [], "Create");
+    const listSection       = createElement("div", ["card", "dashboard-section"]);
+    const listHeader        = createElement("div", ["dashboard-header"]);
+    const countBadge        = createElement("span", ["badge"], "…");
+    const classList         = createElement("div", ["item-list"]);
 
-    // Header
-    const header = createElement("div", ["dashboard-header"]);
-    insertElement(wrapper, header);
-    addNewElement(header, "h2", [], "School Admin");
+    // Main layout
+    insertElement           (root, wrapper);
+    insertElement           (wrapper, header);
+    addNewElement           (header, "h2", [], "School Admin");
 
     // Create class section
-    const createSection = createElement("div", ["card", "dashboard-section"]);
-    insertElement(wrapper, createSection);
-    addNewElement(createSection, "h3", [], "Create class");
+    insertElement           (wrapper, createSection);
+    addNewElement           (createSection, "h3", [], "Create class");
 
-    const form = createElement("form", []);
-    insertElement(createSection, form);
-    form.addEventListener("submit", (e) => handleCreateClass(e, schoolId));
+    insertElement           (createSection, form);
+    form.addEventListener   ("submit", (e) => handleCreateClass(e, schoolId));
 
-    const nameGroup = createElement("div", ["form-group"]);
-    insertElement(form, nameGroup);
-    addNewElement(nameGroup, "label", [], "Class name");
-    createInput(nameGroup, "text", "class-name", "e.g. Math 101", required);
+    insertElement           (form, nameGroup);
+    addNewElement           (nameGroup, "label", [], "Class name");
+    createInput             (nameGroup, "text", "class-name", "e.g. Math 101", required);
 
-    const emailGroup = createElement("div", ["form-group"]);
-    insertElement(form, emailGroup);
-    addNewElement(emailGroup, "label", [], "Rep email");
-    createInput(emailGroup, "email", "class-admin-email", "rep@school.com", required);
+    insertElement           (form, emailGroup);
+    addNewElement           (emailGroup, "label", [], "Rep email");
+    createInput             (emailGroup, "email", "class-admin-email", "rep@school.com", required);
 
-    const errorMsg = createElement("div", ["error-text"]);
-    formatElement(errorMsg, {}, [], { id: "create-class-error" });
-    insertElement(form, errorMsg);
+    formatElement           (errorMsg, {}, [], { id: "create-class-error" });
+    insertElement           (form, errorMsg);
 
-    const submitBtn = createElement("button", [], "Create");
-    formatElement(submitBtn, {}, [], { type: "submit" });
-    insertElement(form, submitBtn);
+    formatElement           (submitBtn, {}, [], { type: "submit" });
+    insertElement           (form, submitBtn);
 
     // Classes list
-    const listSection = createElement("div", ["card", "dashboard-section"]);
-    insertElement(wrapper, listSection);
+    insertElement           (wrapper, listSection);
+    insertElement           (listSection, listHeader);
+    addNewElement           (listHeader, "h3", [], "Classes");
+    formatElement           (countBadge, {}, [], { id: "class-count" });
+    insertElement           (listHeader, countBadge);
+    formatElement           (classList, {}, [], { id: "class-list" });
+    insertElement           (listSection, classList);
 
-    const listHeader = createElement("div", ["dashboard-header"]);
-    insertElement(listSection, listHeader);
-    addNewElement(listHeader, "h3", [], "Classes");
-
-    const countBadge = createElement("span", ["badge"], "…");
-    formatElement(countBadge, {}, [], { id: "class-count" });
-    insertElement(listHeader, countBadge);
-
-    const classList = createElement("div", ["item-list"]);
-    formatElement(classList, {}, [], { id: "class-list" });
-    insertElement(listSection, classList);
-
-    loadClasses(classList, schoolId);
+    loadClasses             (classList, schoolId);
 }
 
+/* ========================================== */
+// FORM ACTIONS
+/* ========================================== */
 async function handleCreateClass(e, schoolId) {
     e.preventDefault();
-    const name = document.getElementById("class-name").value;
-    const email = document.getElementById("class-admin-email").value;
-    const errorEl = document.getElementById("create-class-error");
+    const name              = document.getElementById("class-name").value;
+    const email             = document.getElementById("class-admin-email").value;
+    const errorEl           = document.getElementById("create-class-error");
 
     if (!name || !email) {
         errorEl.textContent = "Fill in all fields.";
         return;
     }
+
     errorEl.textContent = "";
 
     try {
-        const tempFeedbackPassword = crypto.randomUUID().slice(0, 12);
-        const tempPassword = crypto.randomUUID().slice(0, 12);
-        await fn.createClass({
+        const tempFeedbackPassword  = crypto.randomUUID().slice(0, 12);
+        const tempPassword          = crypto.randomUUID().slice(0, 12);
+
+        await fn.createClass        ({
             className: name,
             adminEmail: email,
             adminPassword: tempPassword,
@@ -111,27 +116,34 @@ async function handleCreateClass(e, schoolId) {
         errorEl2.classList.remove("success-text");
         errorEl2.classList.add("error-text");
 
-        const code = err.code?.replace("functions/", "");
-        const messages = {
+        const code      = err.code?.replace("functions/", "");
+        const messages  = {
             "already-exists": "That email is already in use.",
             "permission-denied": "You don't have permission to do this.",
             "unauthenticated": "You must be logged in.",
             "invalid-argument": err.message,
         };
+
         errorEl2.textContent = messages[code] || err.message || "Something went wrong. Try again.";
     }
 }
 
+/* ========================================== */
+// CLASS LIST
+/* ========================================== */
 async function loadClasses(container, schoolId) {
-    container.innerHTML = "";
-    showSpinner(container);
+    container.innerHTML      = "";
+    showSpinner              (container);
 
     try {
-        // Direct Firestore read — authorized by security rules for schooladmin
-        const snapshot = await getDocs(collection(db, "schools", schoolId, "classes"));
-        hideSpinner(container);
+        const snapshot        = await getDocs(collection(db, "schools", schoolId, "classes"));
+        hideSpinner           (container);
 
-        const classes = snapshot.docs.map(d => ({ id: d.id, name: d.data().name, active: d.data().active }));
+        const classes         = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name,
+            active: doc.data().active,
+        }));
 
         const countEl = document.getElementById("class-count");
         countEl.textContent = classes.length;
@@ -143,51 +155,53 @@ async function loadClasses(container, schoolId) {
         }
 
         classes.forEach((cls) => {
-            const row = createElement("div", ["item-row"]);
-            insertElement(container, row);
-            addNewElement(row, "span", [], cls.name);
+            const row           = createElement("div", ["item-row"]);
+            const actions       = createElement("div", ["item-actions"]);
+            const toggleBtn     = createElement(
+                "button",
+                ["btn-small", cls.active ? "btn-active" : "btn-inactive"],
+                cls.active ? "Active" : "Inactive"
+            );
 
-            const actions = createElement("div", ["item-actions"]);
-            insertElement(row, actions);
-
-            // Toggle active/inactive button
-            const toggleBtn = createElement("button", ["btn-small", cls.active ? "btn-active" : "btn-inactive"], cls.active ? "Active" : "Inactive");
-            formatElement(toggleBtn, {}, [], { type: "button" });
-            insertElement(actions, toggleBtn);
+            insertElement       (container, row);
+            addNewElement       (row, "span", [], cls.name);
+            insertElement       (row, actions);
+            formatElement       (toggleBtn, {}, [], { type: "button" });
+            insertElement       (actions, toggleBtn);
             toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
 
-            // Delete button — only for inactive classes
             if (!cls.active) {
                 const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
-                formatElement(deleteBtn, {}, [], { type: "button" });
-                insertElement(actions, deleteBtn);
+                formatElement   (deleteBtn, {}, [], { type: "button" });
+                insertElement   (actions, deleteBtn);
                 deleteBtn.addEventListener("click", () => handleDeleteClass(cls.id, cls.name, schoolId));
             }
         });
     } catch (err) {
-        hideSpinner(container);
-        addNewElement(container, "p", ["error-text"], "Failed to load classes.");
+        hideSpinner             (container);
+        addNewElement           (container, "p", ["error-text"], "Failed to load classes.");
     }
 }
 
+/* ========================================== */
+// ITEM ACTIONS
+/* ========================================== */
 async function handleToggleClass(classId, schoolId, toggleBtn, row) {
-    // Optimistic UI: immediately toggle the button appearance
-    const wasActive = toggleBtn.textContent === "Active";
-    toggleBtn.textContent = wasActive ? "Inactive" : "Active";
+    const wasActive         = toggleBtn.textContent === "Active";
+    toggleBtn.textContent   = wasActive ? "Inactive" : "Active";
     toggleBtn.classList.toggle("btn-active", !wasActive);
     toggleBtn.classList.toggle("btn-inactive", wasActive);
-    formatElement(toggleBtn, {}, [], { disabled: true });
+    formatElement           (toggleBtn, {}, [], { disabled: true });
 
     try {
         await fn.toggleActive({ schoolId, classId });
-        formatElement(toggleBtn, {}, [], { disabled: false });
+        formatElement       (toggleBtn, {}, [], { disabled: false });
 
-        // If we just deactivated, add a delete button; if activated, remove it
         if (wasActive) {
-            const actions = row.querySelector(".item-actions");
+            const actions   = row.querySelector(".item-actions");
             const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
-            formatElement(deleteBtn, {}, [], { type: "button" });
-            insertElement(actions, deleteBtn);
+            formatElement   (deleteBtn, {}, [], { type: "button" });
+            insertElement   (actions, deleteBtn);
             deleteBtn.addEventListener("click", () => {
                 const name = row.querySelector("span").textContent;
                 handleDeleteClass(classId, name, schoolId);
@@ -197,11 +211,10 @@ async function handleToggleClass(classId, schoolId, toggleBtn, row) {
             if (deleteBtn) deleteBtn.remove();
         }
     } catch (err) {
-        // Revert on failure
-        toggleBtn.textContent = wasActive ? "Active" : "Inactive";
+        toggleBtn.textContent   = wasActive ? "Active" : "Inactive";
         toggleBtn.classList.toggle("btn-active", wasActive);
         toggleBtn.classList.toggle("btn-inactive", !wasActive);
-        formatElement(toggleBtn, {}, [], { disabled: false });
+        formatElement           (toggleBtn, {}, [], { disabled: false });
         alert(err.message || "Failed to toggle class.");
     }
 }
@@ -213,7 +226,7 @@ async function handleDeleteClass(classId, className, schoolId) {
         await fn.deleteClass({ classId });
 
         const classList = document.getElementById("class-list");
-        loadClasses(classList, schoolId);
+        loadClasses      (classList, schoolId);
     } catch (err) {
         alert(err.message || "Failed to delete class.");
     }
