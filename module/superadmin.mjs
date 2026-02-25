@@ -1,6 +1,6 @@
 import { createElement, createInput, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, fn, collection, getDocs, requireAuth, escapeHtml, sendPasswordResetEmail }
+import { auth, db, fn, collection, getDocs, requireAuth, escapeHtml, sendPasswordResetEmail }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -226,15 +226,15 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
             return;
         }
 
-        classes.forEach((cls) => {
+        classes.forEach((classroom) => {
             const row           = createElement("div", ["sub-item"]);
             const badgeClasses  = ["badge"];
 
             insertElement       (subList, row);
-            addNewElement       (row, "span", [], cls.name);
+            addNewElement       (row, "span", [], classroom.name);
 
-            if (!cls.active) badgeClasses.push("badge-inactive");
-            addNewElement(row, "span", badgeClasses, cls.active ? "Active" : "Inactive");
+            if (!classroom.active) badgeClasses.push("badge-inactive");
+            addNewElement(row, "span", badgeClasses, classroom.active ? "Active" : "Inactive");
         });
     } catch (err) {
         hideSpinner             (subList);

@@ -1,6 +1,6 @@
 import { createElement, createInput, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, fn, requireAuth, escapeHtml, collection, getDocs, sendPasswordResetEmail }
+import { auth, db, fn, requireAuth, escapeHtml, collection, getDocs, sendPasswordResetEmail }
     from "./firebase-config.mjs";
 
 const root = document.getElementById("root");
@@ -99,22 +99,21 @@ async function handleCreateClass(e, schoolId) {
 
         await sendPasswordResetEmail(auth, email);
 
-        const successEl = document.getElementById("create-class-error");
-        successEl.classList.remove("error-text");
-        successEl.classList.add("success-text");
-        successEl.innerHTML =
+        const success = document.getElementById("create-class-error");
+        success.classList.remove("error-text");
+        success.classList.add("success-text");
+        success.innerHTML =
             `<strong>Class created!</strong><br>` +
             `Student email: <code>${escapeHtml(email)}</code><br>` +
-            `Feedback password: <code>${escapeHtml(tempFeedbackPassword)}</code><br>` +
             `<em>A password setup email has been sent to the student representative.</em>`;
 
         const classList = document.getElementById("class-list");
         loadClasses(classList, schoolId);
         e.target.reset();
     } catch (err) {
-        const errorEl2 = document.getElementById("create-class-error");
-        errorEl2.classList.remove("success-text");
-        errorEl2.classList.add("error-text");
+        const error2 = document.getElementById("create-class-error");
+        error2.classList.remove("success-text");
+        error2.classList.add("error-text");
 
         const code      = err.code?.replace("functions/", "");
         const messages  = {
@@ -124,7 +123,7 @@ async function handleCreateClass(e, schoolId) {
             "invalid-argument": err.message,
         };
 
-        errorEl2.textContent = messages[code] || err.message || "Something went wrong. Try again.";
+        error2.textContent = messages[code] || err.message || "Something went wrong. Try again.";
     }
 }
 
@@ -145,8 +144,8 @@ async function loadClasses(container, schoolId) {
             active: doc.data().active,
         }));
 
-        const countEl = document.getElementById("class-count");
-        countEl.textContent = classes.length;
+        const counter = document.getElementById("class-count");
+        counter.textContent = classes.length;
 
         if (classes.length === 0) {
             const placeholder = addNewElement(container, "p", ["muted"], "No classes yet.");
@@ -154,27 +153,27 @@ async function loadClasses(container, schoolId) {
             return;
         }
 
-        classes.forEach((cls) => {
+        classes.forEach((classroom) => {
             const row           = createElement("div", ["item-row"]);
             const actions       = createElement("div", ["item-actions"]);
             const toggleBtn     = createElement(
                 "button",
-                ["btn-small", cls.active ? "btn-active" : "btn-inactive"],
-                cls.active ? "Active" : "Inactive"
+                ["btn-small", classroom.active ? "btn-active" : "btn-inactive"],
+                classroom.active ? "Active" : "Inactive"
             );
 
             insertElement       (container, row);
-            addNewElement       (row, "span", [], cls.name);
+            addNewElement       (row, "span", [], classroom.name);
             insertElement       (row, actions);
             formatElement       (toggleBtn, {}, [], { type: "button" });
             insertElement       (actions, toggleBtn);
-            toggleBtn.addEventListener("click", () => handleToggleClass(cls.id, schoolId, toggleBtn, row));
+            toggleBtn.addEventListener("click", () => handleToggleClass(classroom.id, schoolId, toggleBtn, row));
 
-            if (!cls.active) {
+            if (!classroom.active) {
                 const deleteBtn = createElement("button", ["btn-danger", "btn-small"], "Delete");
                 formatElement   (deleteBtn, {}, [], { type: "button" });
                 insertElement   (actions, deleteBtn);
-                deleteBtn.addEventListener("click", () => handleDeleteClass(cls.id, cls.name, schoolId));
+                deleteBtn.addEventListener("click", () => handleDeleteClass(classroom.id, classroom.name, schoolId));
             }
         });
     } catch (err) {
