@@ -1,6 +1,12 @@
 import { auth, sendPasswordResetEmail } from "./firebase-config.mjs";
 
 
+/* Utility functions used across multiple modules */
+
+/* Resets the password for an account
+If the user is logged in, it sends a password reset email to their registered email address.
+If the user is not logged in, it checks the email input field on the login form and sends a reset email to that address if it's valid.
+*/
 export async function resetPassword(e) {
     e.preventDefault();
 
@@ -34,6 +40,7 @@ export async function resetPassword(e) {
     }
 }
 
+/* Redirects logged-in users away from the login page to their respective dashboards. */
 export function redirectIfLoggedIn() {
     const loggedInUser = localStorage.getItem("currentUser");
     if (loggedInUser) {

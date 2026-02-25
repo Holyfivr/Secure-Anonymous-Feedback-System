@@ -7,7 +7,7 @@ const root = document.getElementById("root");
 const required = true;
 
 /* ========================================== */
-// PAGE #/superadmin
+/*            PAGE #/superadmin               */
 /* ========================================== */
 export async function renderSuperadminPage() {
     const token             = await requireAuth("superadmin");
@@ -30,12 +30,12 @@ function renderDashboard() {
     const listSection       = createElement("div", ["card", "dashboard-section"]);
     const schoolList        = createElement("div", ["item-list"]);
 
-    // Main layout
+    /* Main layout */
     insertElement           (root, wrapper);
     insertElement           (wrapper, header);
     addNewElement           (header, "h2", [], "Superadmin");
 
-    // Create school section
+    /* Create school section */
     insertElement           (wrapper, createSection);
     addNewElement           (createSection, "h3", [], "Create school");
 
@@ -56,7 +56,7 @@ function renderDashboard() {
     formatElement           (submitBtn, {}, [], { type: "submit" });
     insertElement           (form, submitBtn);
 
-    // Schools list
+    /* Schools list */
     insertElement           (wrapper, listSection);
     addNewElement           (listSection, "h3", [], "Schools");
     formatElement           (schoolList, {}, [], { id: "school-list" });
@@ -66,7 +66,7 @@ function renderDashboard() {
 }
 
 /* ========================================== */
-// FORM ACTIONS
+/*              FORM ACTIONS                  */
 /* ========================================== */
 async function handleCreateSchool(e) {
     e.preventDefault();
@@ -92,7 +92,7 @@ async function handleCreateSchool(e) {
 
         await sendPasswordResetEmail(auth, email);
 
-        // Show creation info to superadmin (escaped to prevent XSS)
+        /* Show creation info to superadmin (escaped to prevent XSS) */
         const successEl = document.getElementById("create-school-error");
         successEl.classList.remove("error-text");
         successEl.classList.add("success-text");
@@ -101,7 +101,7 @@ async function handleCreateSchool(e) {
             `Email: <code>${escapeHtml(email)}</code><br>` +
             `<em>A password setup email has been sent to the school admin.</em>`;
 
-        // Refresh list
+        /* Refresh list */
         const schoolList = document.getElementById("school-list");
         loadSchools(schoolList);
         e.target.reset();
@@ -122,7 +122,7 @@ async function handleCreateSchool(e) {
 }
 
 /* ========================================== */
-// SCHOOL LIST
+/*                  SCHOOL LIST               */
 /* ========================================== */
 async function loadSchools(container) {
     container.innerHTML      = "";
@@ -175,7 +175,7 @@ async function loadSchools(container) {
 }
 
 /* ========================================== */
-// ITEM ACTIONS
+/*                  ITEM ACTIONS              */
 /* ========================================== */
 async function handleToggleSchool(schoolId, container) {
     try {

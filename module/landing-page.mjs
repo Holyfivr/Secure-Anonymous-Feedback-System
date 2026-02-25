@@ -27,7 +27,7 @@ export function renderNavBar(parent) {
     insertElement   (navBar, anchor);
   });
 
-  // Checks if user is logged in and renders appropriate buttons
+  /* Checks if user is logged in and renders appropriate buttons */
   const loggedIn    = localStorage.getItem("currentUser");
   if (loggedIn) {
     const logoutBtn     = createElement("a", ["btn-danger"], "Log out");
