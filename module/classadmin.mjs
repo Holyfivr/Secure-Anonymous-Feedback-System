@@ -1,6 +1,6 @@
 import { createElement, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
+import { auth, db, fn, requireAuth, doc, getDoc, deleteDoc }
     from "./firebase-config.mjs";
 
 

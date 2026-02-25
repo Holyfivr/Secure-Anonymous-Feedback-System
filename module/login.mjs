@@ -62,14 +62,14 @@ async function handleLogin(e) {
     e.preventDefault();
     const email         = document.getElementById("login-email").value;
     const password      = document.getElementById("login-password").value;
-    const errorEl       = document.getElementById("login-error");
+    const error       = document.getElementById("login-error");
 
     if (!email || !password) {
-        errorEl.textContent = "Please enter a valid email/password.";
+        error.textContent = "Please enter a valid email/password.";
         return;
     }
 
-    errorEl.textContent = "";
+    error.textContent = "";
 
     try {
         const credential    = await signInWithEmailAndPassword(auth, email, password);
@@ -82,11 +82,11 @@ async function handleLogin(e) {
         else if (role === "schooladmin")    window.location.hash = "#/schooladmin";
         else if (role === "classadmin")     window.location.hash = "#/classadmin";
         else {
-            errorEl.textContent = "No role assigned to this account.";
+            error.textContent = "No role assigned to this account.";
             await signOut(auth);
         }
     } catch (err) {
-        errorEl.textContent = "Wrong email or password.";
+        error.textContent = "Wrong email or password.";
     }
 }
 

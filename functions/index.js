@@ -90,17 +90,17 @@ async function deleteAllDocuments(collectionRef) {
   }
 }
 
-/* ========================================== */=
+/* ========================================== */
 // LIST ACTIVE SCHOOLS (public, for picker)
-/* ========================================== */=
+/* ========================================== */
 exports.listSchools = onCall({region: "europe-west1"}, async () => {
   const snapshot = await db.collection("schools").where("active", "==", true).get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
 
-/* ========================================== */=
+/* ========================================== */
 // LIST ACTIVE CLASSES (public, for picker)
-/* ========================================== */=
+/* ========================================== */
 exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
   const {schoolId} = request.data;
   if (!schoolId) {
@@ -114,9 +114,9 @@ exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
 
-/* ========================================== */=
+/* ========================================== */
 // GET CLASS NAME (public, for feedback form)
-/* ========================================== */=
+/* ========================================== */
 exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
   const {schoolId, classId} = request.data;
   if (!schoolId || !classId) {
@@ -133,9 +133,9 @@ exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
   return {name: classDoc.data().name};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // CREATE SCHOOL (superadmin only)
-/* ========================================== */=
+/* ========================================== */
 exports.createSchool = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "superadmin");
 
@@ -168,9 +168,9 @@ exports.createSchool = onCall({region: "europe-west1"}, async (request) => {
   return {schoolId: schoolRef.id, adminUid: userRecord.uid};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // CREATE CLASS (school admin only)
-/* ========================================== */=
+/* ========================================== */
 exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "schooladmin");
 
@@ -211,9 +211,9 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   return {classId: classRef.id, adminUid: userRecord.uid};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // RESET CLASS POST PASSWORD (class admin only)
-/* ========================================== */=
+/* ========================================== */
 exports.resetFeedbackPassword = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "classadmin");
   const schoolId = request.auth.token.schoolId;
@@ -234,9 +234,9 @@ exports.resetFeedbackPassword = onCall({region: "europe-west1"}, async (request)
   return {status: "ok"};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // POST MESSAGE (anonymous, rate-limited)
-/* ========================================== */=
+/* ========================================== */
 exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
   const {schoolId, classId, text, password} = request.data;
 
@@ -293,9 +293,9 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"},
   return {status: "ok"};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // LIST MESSAGES (classadmin only, decrypts)
-/* ========================================== */=
+/* ========================================== */
 exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
@@ -327,9 +327,9 @@ exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1"}
   });
 });
 
-/* ========================================== */=
+/* ========================================== */
 // DELETE CLASS (school admin only)
-/* ========================================== */=
+/* ========================================== */
 exports.deleteClass = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "schooladmin");
 
@@ -370,9 +370,9 @@ exports.deleteClass = onCall({region: "europe-west1"}, async (request) => {
   return {status: "deleted"};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // DELETE SCHOOL (superadmin only)
-/* ========================================== */=
+/* ========================================== */
 exports.deleteSchool = onCall({region: "europe-west1"}, async (request) => {
   requireRole(request, "superadmin");
 
@@ -424,9 +424,9 @@ exports.deleteSchool = onCall({region: "europe-west1"}, async (request) => {
   return {status: "deleted"};
 });
 
-/* ========================================== */=
+/* ========================================== */
 // LIST CLASS NAMES (superadmin, for overview)
-/* ========================================== */=
+/* ========================================== */
 exports.listClassNames = onCall({region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
@@ -453,11 +453,11 @@ exports.listClassNames = onCall({region: "europe-west1"}, async (request) => {
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name, active: doc.data().active}));
 });
 
-/* ========================================== */=
+/* ========================================== */
 // TOGGLE SCHOOL/CLASS ACTIVE
 // - Superadmin: can toggle any school or class
 // - School admin: can toggle own classes only
-/* ========================================== */=
+/* ========================================== */
 exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
