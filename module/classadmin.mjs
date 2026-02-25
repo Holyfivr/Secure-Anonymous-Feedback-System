@@ -29,6 +29,7 @@ async function renderDashboard(schoolId, classId) {
     insertElement       (root, wrapper);
     insertElement       (wrapper, header);
 
+    
     /* LINK SECTION */
     const linkSection   = createElement("div", ["card", "dashboard-section"]);
     const feedbackUrl   = `${window.location.origin}${window.location.pathname}#/feedback/${schoolId}/${classId}`;
@@ -59,8 +60,6 @@ async function renderDashboard(schoolId, classId) {
     formatElement       (resetBtn, {}, [], { type: "button" });
     insertElement       (resetHeader, resetBtn);
     enableResetBtn      (resetBtn, resetInput, resetPasswordSection);
-
-
 
 
     /* MESSAGES SECTION */

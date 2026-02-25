@@ -5,9 +5,9 @@ import { fn } from "./firebase-config.mjs";
 const root = document.getElementById("root");
 const required = true;
 
-// ==========================================
-// PICKER PAGE #/feedback
-// ==========================================
+/* ========================================== */
+/*          PICKER PAGE #/feedback            */
+/* ========================================== */
 export async function renderFeedbackPage() {
     root.innerHTML = "";
     renderNavBar(root);
@@ -23,43 +23,43 @@ export async function renderFeedbackPage() {
     const btn                   = createElement("button", [], "Go to feedback form");
     const initialClassOption    = createElement("option", [], "Pick a school first");
 
-    // Format elements
+    /* Format elements */
     formatElement               (schoolSelect, {}, [], { id: "pick-school" });
     formatElement               (classSelect, {}, [], { id: "pick-class", disabled: true });
     formatElement               (error, {}, [], { id: "picker-error" });
     formatElement               (btn, {}, [], { type: "submit" });
 
-    // Form Container
+    /* Form Container */
     insertElement               (root, wrapper);
     insertElement               (wrapper, card);
     addNewElement               (card, "h2", [], "Send feedback");
     addNewElement               (card, "p", ["muted"], "Find your class to send anonymous feedback.");
     insertElement               (card, form);
 
-    // School select
+    /* School select */
     insertElement               (form, schoolGroup);
     addNewElement               (schoolGroup, "label", [], "School");
     insertElement               (schoolGroup, schoolSelect);
 
-    // Class select
+    /* Class select */
     insertElement               (form, classGroup);
     addNewElement               (classGroup, "label", [], "Class");
     insertElement               (classGroup, classSelect);
     formatElement               (initialClassOption, {}, [], { value: "" });
     insertElement               (classSelect, initialClassOption);
 
-    // Error message and submit button
+    /* Error message and submit button */
     insertElement               (form, error);
     insertElement               (form, btn);
 
     showSpinner                 (schoolGroup);  
 
-    // Load schools
+    /* Load schools */
     loadSchools(schoolGroup, schoolSelect);
-    // Load classes when a school is selected
+    /* Load classes when a school is selected */
     loadClasses(schoolSelect, classGroup, classSelect);
 
-    // Navigate to feedback form
+    /* Navigate to feedback form */
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         const schoolId          = schoolSelect.value;
@@ -73,15 +73,15 @@ export async function renderFeedbackPage() {
     });
 }
 
-// ==========================================
-// FEEDBACK FORM #/feedback/:schoolId/:classId
-// ==========================================
+/* =========================================== */
+/* FEEDBACK FORM #/feedback/:schoolId/:classId */
+/* =========================================== */
 export async function renderFeedbackForm(schoolId, classId) {
 
     root.innerHTML = "";
     renderNavBar(root);
 
-    // Create frame and form
+    /* Create frame and form */
     const wrapper       = createElement("div", ["page-wrapper"]);
     const card          = createElement("div", ["card", "feedback-card"]);
     const heading       = createElement("h2", [], "Feedback: ");
@@ -92,12 +92,12 @@ export async function renderFeedbackForm(schoolId, classId) {
     insertElement       (card, heading);
     addNewElement       (card, "p", ["muted"], "Your message is completely anonymous.");
 
-    // Build the form immediately; fetch class name in background
+    /* Build the form immediately; fetch class name in background */
     insertElement       (card, form);
 
     form.addEventListener("submit", (e) => handlePostMessage(e, schoolId, classId));
 
-    // Password section
+    /* Password section */
     const passGroup     = createElement("div", ["form-group"]);
     const passwordInput = createElement("input");
 
@@ -106,7 +106,7 @@ export async function renderFeedbackForm(schoolId, classId) {
     formatElement       (passwordInput, {}, [], { type: "password", id: "feedback-password", placeholder: "Enter class password", required });
     insertElement       (passGroup, passwordInput);
 
-    // Message section
+    /* Message section */
     const msgGroup      = createElement("div", ["form-group"]);
     const textArea      = createElement("textarea");
 
@@ -115,26 +115,26 @@ export async function renderFeedbackForm(schoolId, classId) {
     formatElement       (textArea, {}, [], { id: "feedback-message", placeholder: "Type your feedback here...", required: true, maxLength: 500, rows: 5 });
     insertElement       (msgGroup, textArea);
 
-    // Footer section
+    /* Footer section */
     const counter       = createElement("div", ["char-counter"], "0 / 500");
     const status        = createElement("div", ["error-text"]);
     const btn           = createElement("button", [], "Send feedback");
     
-    // Counter
+    /* Counter */
     insertElement       (msgGroup, counter);
     textArea.addEventListener("input", () => {
         counter.textContent = `${textArea.value.length} / 500`;
     });
     
-    // Status message
+    /* Status message */
     formatElement       (status, {}, [], { id: "feedback-status" });
     insertElement       (form, status);
     
-    // Submit button
+    /* Submit button */
     formatElement       (btn, {}, [], { type: "submit" });
     insertElement       (form, btn);
 
-    // Load class name in background (non-blocking — form is already usable)
+    /* Load class name in background (non-blocking — form is already usable) */
     fn.getClassName     ({ schoolId, classId })
         .then           (result => { heading.textContent = `Feedback ${result.data.name}`; })
         .catch          (() => { /* keep generic heading */ });
