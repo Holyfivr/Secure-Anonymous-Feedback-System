@@ -15,9 +15,9 @@ const routes = {
 };
 
 function navigate() {
-    const hash = window.location.hash.slice(1) || "/home"; // remove '#'
+    const hash = window.location.hash.slice(1) || "/home"; /* remove '#' */
 
-    // Check for dynamic feedback route: /feedback/schoolId/classId
+    /* Check for dynamic feedback route: /feedback/schoolId/classId */
     const feedbackMatch = hash.match(/^\/feedback\/([^/]+)\/([^/]+)$/);
     if (feedbackMatch) {
         renderFeedbackForm(feedbackMatch[1], feedbackMatch[2]);
@@ -33,4 +33,4 @@ function navigate() {
 }
 
 window.addEventListener("hashchange", navigate);
-navigate(); // Initial render
+navigate(); /* Initial render */

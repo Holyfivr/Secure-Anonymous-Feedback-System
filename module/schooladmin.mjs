@@ -7,7 +7,7 @@ const root = document.getElementById("root");
 const required = true;
 
 /* ========================================== */
-// PAGE #/schooladmin
+/*              PAGE #/schooladmin            */
 /* ========================================== */
 export async function renderSchooladminPage() {
     const token             = await requireAuth("schooladmin");
@@ -32,12 +32,12 @@ function renderDashboard(schoolId) {
     const countBadge        = createElement("span", ["badge"], "…");
     const classList         = createElement("div", ["item-list"]);
 
-    // Main layout
+    /* Main layout */
     insertElement           (root, wrapper);
     insertElement           (wrapper, header);
     addNewElement           (header, "h2", [], "School Admin");
 
-    // Create class section
+    /* Create class section */
     insertElement           (wrapper, createSection);
     addNewElement           (createSection, "h3", [], "Create class");
 
@@ -58,7 +58,7 @@ function renderDashboard(schoolId) {
     formatElement           (submitBtn, {}, [], { type: "submit" });
     insertElement           (form, submitBtn);
 
-    // Classes list
+    /* Classes list */
     insertElement           (wrapper, listSection);
     insertElement           (listSection, listHeader);
     addNewElement           (listHeader, "h3", [], "Classes");
@@ -71,7 +71,7 @@ function renderDashboard(schoolId) {
 }
 
 /* ========================================== */
-// FORM ACTIONS
+/*               FORM ACTIONS                 */
 /* ========================================== */
 async function handleCreateClass(e, schoolId) {
     e.preventDefault();
@@ -129,7 +129,7 @@ async function handleCreateClass(e, schoolId) {
 }
 
 /* ========================================== */
-// CLASS LIST
+/*                  CLASS LIST                */
 /* ========================================== */
 async function loadClasses(container, schoolId) {
     container.innerHTML      = "";
@@ -184,7 +184,7 @@ async function loadClasses(container, schoolId) {
 }
 
 /* ========================================== */
-// ITEM ACTIONS
+/*                  ITEM ACTIONS              */
 /* ========================================== */
 async function handleToggleClass(classId, schoolId, toggleBtn, row) {
     const wasActive         = toggleBtn.textContent === "Active";

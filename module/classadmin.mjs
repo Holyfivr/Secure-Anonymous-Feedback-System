@@ -6,12 +6,12 @@ import { auth, db, signOut, fn, requireAuth, doc, getDoc, deleteDoc }
 
 /* Class Admin Dashboard (URL: #/classadmin) */
 
-// Root div for the index.html page
+/* Root div for the index.html page */
 const root = document.getElementById("root");
 
 /* Renders the class admin dashboard view */
 export async function renderClassadminPage() {
-    // Check auth and role first - if not authenticated or wrong role, requireAuth will redirect to Login and return null
+    /* Check auth and role first - if not authenticated or wrong role, requireAuth will redirect to Login and return null */
     const token = await requireAuth("classadmin");
     if (!token) return;
     root.innerHTML = "";
@@ -78,7 +78,7 @@ async function renderDashboard(schoolId, classId) {
     insertElement       (msgSection, msgList);
     showSpinner         (msgList);
 
-    // Load class name (direct Firestore read) + messages (Cloud Function)
+    /* Load class name (direct Firestore read) + messages (Cloud Function) */
     const [className] = await Promise.all([
         getDoc(doc(db, "schools", schoolId, "classes", classId))
             .then(snap => snap.exists() ? snap.data().name : "your class")
@@ -144,9 +144,9 @@ function renderMessageCard(container, msg, schoolId, classId) {
 
 /* Handles the deletion of a message, including optimistic UI update and error handling */
 async function handleDeleteMessage(messageId, card, schoolId, classId) {
-    if (!confirm("Delete this message?")) return; // Confirmation dialog before deletion
+    if (!confirm("Delete this message?")) return; /* Confirmation dialog before deletion */
 
-    // Optimistic UI: remove from DOM immediately
+    /* Optimistic UI: remove from DOM immediately */
     card.style.opacity          = "0.4";
     card.style.pointerEvents    = "none";
 
@@ -156,7 +156,7 @@ async function handleDeleteMessage(messageId, card, schoolId, classId) {
 
         card.remove();
 
-        // Update count
+        /* Update count */
         const counter       = document.getElementById("msg-count");
         const remaining     = document.querySelectorAll("#msg-list .message-card").length;
         counter.textContent = remaining;
@@ -168,7 +168,7 @@ async function handleDeleteMessage(messageId, card, schoolId, classId) {
             formatElement       (placeholder, { fontStyle: "italic" });
         }
     } catch (err) {
-        // Revert optimistic UI on failure
+        /* Revert optimistic UI on failure */
         console.error               ("Failed to delete message:", err);
         card.style.opacity          = "1";
         card.style.pointerEvents    = "auto";
