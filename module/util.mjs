@@ -11,7 +11,7 @@ export async function resetPassword(e) {
     e.preventDefault();
 
     const error                 = document.getElementById("login-error");
-    if (!error) return;
+    
 
     let email                   = auth.currentUser?.email || "";
 
@@ -21,22 +21,34 @@ export async function resetPassword(e) {
     }
 
     if (!email) {
-        error.classList.remove  ("success-text");
-        error.classList.add     ("error-text");
-        error.textContent       = "Enter your email first.";
+        if (error) {
+            error.classList.remove  ("success-text");
+            error.classList.add     ("error-text");
+            error.textContent       = "Enter your email first.";
+        } else {
+            alert("Enter your email first.");
+        }
         return;
     }
 
     try {
         await sendPasswordResetEmail(auth, email);
-        error.classList.remove  ("error-text");
-        error.classList.add     ("success-text");
-        error.textContent       = "Password reset email sent! Check your inbox or spam folder. Note that it may take several minutes for the mail to arrive.";
-        error.style.fontWeight  = "bold";
+        if (error) {
+            error.classList.remove  ("error-text");
+            error.classList.add     ("success-text");
+            error.textContent       = "Password reset email sent! Check your inbox or spam folder. Note that it may take several minutes for the mail to arrive.";
+            error.style.fontWeight  = "bold";
+        } else {
+            alert("Password reset email sent! Check your inbox or spam folder. Note that it may take several minutes for the mail to arrive.");
+        }
     } catch (err) {
+        if (error) {
         error.classList.remove  ("success-text");
         error.classList.add     ("error-text");
         error.textContent       = "Could not send reset email. Check the address.";
+        } else {
+            alert("Could not send reset email. Check the address.");
+        }
     }
 }
 
