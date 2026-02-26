@@ -31,34 +31,32 @@ async function renderDashboard(schoolId, classId) {
 
     
     /* LINK SECTION */
-    const linkSection   = createElement("div", ["card", "dashboard-section"]);
+    const linkSection   = createElement("div", ["card", "dashboard-section", "dashboard-header"]);
     const feedbackUrl   = `${window.location.origin}${window.location.pathname}#/feedback/${schoolId}/${classId}`;
     const urlRow        = createElement("div", ["url-row"]);
     const copyBtn       = createElement("button", ["btn-small"], "Copy");
 
     insertElement       (wrapper, linkSection);
     addNewElement       (linkSection, "h3", [], "Feedback link");
+    addNewElement       (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
     insertElement       (linkSection, urlRow);
     addNewElement       (urlRow, "code", ["url-text"], feedbackUrl);
     formatElement       (copyBtn, {}, [], { type: "button" });
-    insertElement       (urlRow, copyBtn);
-    addNewElement       (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+    insertElement       (linkSection, copyBtn);
     enableCopyBtn       (copyBtn, feedbackUrl);
    
 
     /* PASSWORD RESET SECTION */
-    const resetPasswordSection  = createElement("div", ["card", "dashboard-section"]);
-    const resetHeader           = createElement("div", ["dashboard-header"]);
+    const resetPasswordSection  = createElement("div", ["card", "dashboard-section", "dashboard-header"]);
     const resetInput            = createElement("input", ["input-small", "reset-post-password"]);
     const resetBtn              = createElement("button", ["btn-small"], "Reset");
 
     insertElement       (wrapper, resetPasswordSection);
-    insertElement       (resetPasswordSection, resetHeader);
-    addNewElement       (resetHeader, "p", [], "Reset feedback password");
-    formatElement       (resetInput, {}, [], { type: "text" });
-    insertElement       (resetHeader, resetInput);
+    addNewElement       (resetPasswordSection, "label", [], "Set new feedback password");
+    formatElement       (resetInput, {}, [], { type: "text", placeholder: "New password ..." });
+    insertElement       (resetPasswordSection, resetInput);
     formatElement       (resetBtn, {}, [], { type: "button" });
-    insertElement       (resetHeader, resetBtn);
+    insertElement       (resetPasswordSection, resetBtn);
     enableResetBtn      (resetBtn, resetInput, resetPasswordSection);
 
 
@@ -199,9 +197,9 @@ function enableResetBtn(resetBtn, resetInput, resetPasswordSection) {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
             alert               ("Feedback password reset successfully.");
             resetInput.value    = "";
-            addNewElement       (resetPasswordSection, "p", [], "Feedback password has been changed.");
-            addNewElement       (resetPasswordSection, "p", [], `New password: ${newPassword}.`);
-            addNewElement       (resetPasswordSection, "p", [], "Share this password with your classmates.");
+            addNewElement       (resetPasswordSection, "br");
+            addNewElement       (resetPasswordSection, "h3", ["success-color"], `New password: ${newPassword}.`);
+            addNewElement       (resetPasswordSection, "h3", ["success-color"], "Share this password with your classmates.");
 
         } catch (err) {
             console.error       ("Error resetting feedback password:", err);

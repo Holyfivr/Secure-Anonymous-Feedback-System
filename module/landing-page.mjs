@@ -10,7 +10,7 @@ export function renderLandingPage() {
 const navLinks = [
     { href: "#/home"    , text: "Home" },
     { href: "#/privacy" , text: "Privacy" },
-    { href: "#/feedback", text: "Send feedback" },
+    { href: "#/feedback", text: "Feedback" },
 ];
 
 export function renderNavBar(parent) {
@@ -30,7 +30,7 @@ export function renderNavBar(parent) {
   /* Checks if user is logged in and renders appropriate buttons */
   const loggedIn    = localStorage.getItem("currentUser");
   if (loggedIn) {
-    const logoutBtn     = createElement("a", ["btn-danger"], "Log out");
+    const logoutBtn     = createElement("a", ["btn"], "Log out");
     const dashboardBtn  = createElement("a", [], "Dashboard");
     insertElement       (navBar, dashboardBtn);
     insertElement       (navBar, logoutBtn);

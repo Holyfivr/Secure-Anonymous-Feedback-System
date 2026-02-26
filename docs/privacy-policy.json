@@ -1,0 +1,175 @@
+{
+  "defaultLanguage": "en",
+  "languages": {
+    "en": {
+      "buttonLabel": "English",
+      "title": "Privacy and Data Handling (SAFS)",
+      "lastUpdatedLabel": "Last updated",
+      "updatedAt": "2026-02-25",
+      "loadError": "Could not load privacy policy.",
+      "sections": [
+        {
+          "heading": "Data Controller",
+          "paragraphs": [
+            "The data controller for SAFS is Joel Seger.",
+            "Contact: joelseger87@gmail.com"
+          ]
+        },
+        {
+          "heading": "What personal data is processed",
+          "paragraphs": [
+            "The only personal data SAFS intentionally* stores is administrator email addresses."
+          ]
+        },
+        {
+          "heading": "Why email addresses are stored",
+          "paragraphs": [
+            "Email addresses are required for the service to function: create and manage administrator accounts, enable authentication, and assign and enforce admin permissions."
+          ]
+        },
+        {
+          "heading": "Other data in the service",
+          "paragraphs": [
+            "SAFS also stores schools, classes, and feedback content in order for the system to function.",
+            "This data is generally not personal data by itself, but it may become personal data if someone enters identifying information in free text."
+          ]
+        },
+        {
+          "heading": "Security",
+          "bullets": [
+            "Feedback is stored encrypted in the database.",
+            "Authentication for admin and student representative accounts is handled by Firebase Authentication**.",
+            "Class feedback passwords are stored hashed and salted, and cannot be restored to plain text.",
+            "Data access is restricted through role-based access control."
+          ]
+        },
+        {
+          "heading": "Third-party services",
+          "paragraphs": [
+            "SAFS uses Google Firebase and Google Cloud for authentication, data storage, and server-side functions.",
+            "Google processes data under its terms as a technical provider/processor."
+          ]
+        },
+        {
+          "heading": "Retention",
+          "paragraphs": [
+            "Data for school administrators and feedback is stored as long as the account is active.",
+            "Data for classes and student representatives is stored as long as the class is active."
+          ]
+        },
+        {
+          "heading": "Rights",
+          "paragraphs": [
+            "Under applicable law, you have the right to request access to your personal data, and to request correction or deletion.",
+            "Since SAFS does not intentionally* store personal data beyond email addresses, the amount of data that can be disclosed is limited.",
+            "However, an email address can be deleted on request, together with all data linked to that account.",
+            "Information about messages and passwords cannot be disclosed by the SAFS data controller in plain text, since this data is stored encrypted and hashed, and the data controller has no technical access to decrypt or restore it.",
+            "Messages can only be accessed within each class account by an authorized student representative."
+          ]
+        },
+        {
+          "heading": "Updates",
+          "paragraphs": [
+            "This text may be updated if the service or legal requirements change.",
+            "The latest version is published in SAFS."
+          ]
+        }
+      ],
+      "footnotes": [
+        {
+          "marker": "*",
+          "text": "Because users can technically enter personal data in messages or class names, such personal data may be stored. This is not the intended use of these fields, and it is not the intention to process such data as personal data. Users are responsible for not entering personal data in these fields."
+        },
+        {
+          "marker": "**",
+          "text": "Firebase Authentication stores passwords as salted cryptographic hashes (not plain text) and verifies sign-ins through hash comparison. SAFS never receives access to plain-text passwords."
+        }
+      ]
+    },
+    "sv": {
+      "buttonLabel": "Svenska",
+      "title": "Integritet och datahantering (SAFS)",
+      "lastUpdatedLabel": "Senast uppdaterad",
+      "updatedAt": "2026-02-25",
+      "loadError": "Kunde inte ladda integritetspolicyn.",
+      "sections": [
+        {
+          "heading": "Personuppgiftsansvarig",
+          "paragraphs": [
+            "Personuppgiftsansvarig för SAFS är Joel Seger.",
+            "Kontakt: joelseger87@gmail.com"
+          ]
+        },
+        {
+          "heading": "Vilka personuppgifter behandlas",
+          "paragraphs": [
+            "Den enda personuppgift som SAFS avsiktligt* lagrar är e-postadress för administratörskonton."
+          ]
+        },
+        {
+          "heading": "Varför e-postadress lagras",
+          "paragraphs": [
+            "E-postadress behövs för att tjänsten ska fungera: skapa och hantera administratörskonton, möjliggöra inloggning, tilldela och kontrollera admin-behörighet."
+          ]
+        },
+        {
+          "heading": "Övrig data i tjänsten",
+          "paragraphs": [
+            "SAFS lagrar även skolor, klasser och feedbackinnehåll för att systemet ska fungera.",
+            "Denna data är normalt inte personuppgifter i sig, men kan bli det om någon skriver in identifierande information i fritext."
+          ]
+        },
+        {
+          "heading": "Säkerhet",
+          "bullets": [
+            "Feedback lagras krypterat i databasen.",
+            "Inloggning för admin- och studentrepresentantkonton hanteras av Firebase Authentication**.",
+            "Klassens feedbacklösenord lagras hashat och saltat, och kan inte återställas till klartext.",
+            "Datatillgång begränsas genom rollbaserad behörighetskontroll."
+          ]
+        },
+        {
+          "heading": "Tredjepartstjänster",
+          "paragraphs": [
+            "SAFS använder Google Firebase och Google Cloud för autentisering, datalagring och serverfunktioner.",
+            "Google behandlar data enligt sina villkor som teknisk leverantör/biträde."
+          ]
+        },
+        {
+          "heading": "Lagringstid",
+          "paragraphs": [
+            "Data för skoladministratörer och feedback lagras så länge som kontot är aktivt.",
+            "Data för klasser och studentrepresentanter lagras så länge som klassen är aktiv."
+          ]
+        },
+        {
+          "heading": "Rättigheter",
+          "paragraphs": [
+            "Enligt lag har du rätt att begära ut dina personuppgifter, få dem rättade eller borttagna.",
+            "Eftersom SAFS inte avsiktligt* lagrar några personuppgifter utöver e-postadresser är mängden data som kan lämnas ut begränsad.",
+            "Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot.",
+            "Information om meddelanden och lösenord kan inte lämnas ut av SAFS personuppgiftsansvarig i klartext, eftersom uppgifterna lagras krypterat respektive hashat och personuppgiftsansvarig saknar teknisk åtkomst att dekryptera eller återställa dem.",
+            "Meddelanden kan endast nås inom respektive klasskonto av behörig studentrepresentant."
+          ]
+        },
+        {
+          "heading": "Ändringar",
+          "paragraphs": [
+            "Texten kan uppdateras vid förändringar i tjänsten eller lagkrav.",
+            "Aktuell version publiceras i SAFS."
+          ]
+        }
+      ],
+      "footnotes": [
+        {
+          "marker": "*",
+          "text": "Eftersom det är tekniskt möjligt för användare att skriva in personuppgifter i inlägg, eller i klassnamn kan det innebära att denna persondata lagras. Det är dock inte en avsikt att lagra personuppgifter i dessa fält, och det är inte heller en avsikt att behandla sådan data som personuppgifter. Det är användarens ansvar att inte skriva in personuppgifter i dessa fält."
+        },
+        {
+          "marker": "**",
+          "text": "Firebase Authentication lagrar lösenord som saltade kryptografiska hashar (inte klartext) och verifierar inloggning genom hash-jämförelse. SAFS får aldrig tillgång till lösenord i klartext."
+        }
+      ]
+    }
+  }
+}
