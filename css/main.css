@@ -335,6 +335,12 @@ textarea {
     transition: opacity 0.2s ease;
 }
 
+
+#resetPasswordLink:hover {
+    background-color: var(--danger-color);
+    color: var(--secondary-color);
+}
+
 .privacy-card {
   width: clamp(220px, 80vw, 1000px);
   background: var(--primary-color);

@@ -1,4 +1,4 @@
-import { createElement, insertElement, formatElement } from "./dom-helper.mjs";
+import { createElement, addNewElement, insertElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
 
 const root = document.getElementById("root");
@@ -104,8 +104,8 @@ function renderPolicyContent(container, languagePolicy) {
   });
 
   if (languagePolicy.footnotes?.length) {
-    const divider = createElement("hr");
-    insertElement(container, divider);
+      addNewElement(container, "hr");
+
 
     languagePolicy.footnotes.forEach((footnote) => {
       const footnoteText = `${footnote.marker} ${footnote.text}`;

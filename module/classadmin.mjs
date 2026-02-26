@@ -1,7 +1,7 @@
 import { createElement, showSpinner, hideSpinner, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { renderNavBar } from "./landing-page.mjs";
-import { auth, db, fn, requireAuth, doc, getDoc, deleteDoc }
-    from "./firebase-config.mjs";
+import { auth, db, fn, requireAuth, doc, getDoc, deleteDoc } from "./firebase-config.mjs";
+import { resetPassword } from "./util.mjs";
 
 
 /* Class Admin Dashboard (URL: #/classadmin) */
@@ -47,17 +47,24 @@ async function renderDashboard(schoolId, classId) {
    
 
     /* PASSWORD RESET SECTION */
-    const resetPasswordSection  = createElement("div", ["card", "dashboard-section", "dashboard-header"]);
-    const resetInput            = createElement("input", ["input-small", "reset-post-password"]);
-    const resetBtn              = createElement("button", ["btn-small"], "Reset");
-
+    const resetPasswordSection      = createElement("div", ["card", "dashboard-section", "dashboard-header"]);
+    const resetInput                = createElement("input", ["input-small", "reset-feedback-password"]);
+    const resetUserPassword         = createElement("button", [], "Send link to reset user password", "resetPasswordLink");
+    const resetFeedbackPasswordBtn  = createElement("button", ["btn-small"], "Reset");
+    const divider                   = createElement ("hr");
+    
     insertElement       (wrapper, resetPasswordSection);
+    insertElement       (resetPasswordSection, resetUserPassword);
+    insertElement       (resetPasswordSection, divider);
+    formatElement       (divider, {}, [], { style: "margin: 1.5rem 0; width:200px;" });
     addNewElement       (resetPasswordSection, "label", [], "Set new feedback password");
     formatElement       (resetInput, {}, [], { type: "text", placeholder: "New password ..." });
     insertElement       (resetPasswordSection, resetInput);
-    formatElement       (resetBtn, {}, [], { type: "button" });
-    insertElement       (resetPasswordSection, resetBtn);
-    enableResetBtn      (resetBtn, resetInput, resetPasswordSection);
+    formatElement       (resetFeedbackPasswordBtn, {}, [], { type: "button" });
+    insertElement       (resetPasswordSection, resetFeedbackPasswordBtn);
+    
+    resetUserPassword.addEventListener("click", resetPassword);
+    enableResetBtn      (resetFeedbackPasswordBtn, resetInput, resetPasswordSection);
 
 
     /* MESSAGES SECTION */
