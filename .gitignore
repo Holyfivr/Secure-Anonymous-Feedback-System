@@ -11,3 +11,5 @@ firebase-debug.*.log
 ui-debug.log
 functions/set-superadmin.js
 code-review.md
+docs/privacy-policy.sv.md
+docs/privacy-policy.en.md
