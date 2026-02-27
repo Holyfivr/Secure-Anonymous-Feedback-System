@@ -52,9 +52,10 @@
         },
         {
           "heading": "Retention",
-          "paragraphs": [
-            "Data for school administrators and feedback is stored as long as the account is active.",
-            "Data for classes and student representatives is stored as long as the class is active."
+          "bullets": [
+            "Data for school administrators and feedback is stored as long as the account exists.",
+            "Data for classes and student representatives is stored as long as the class exists.",
+            "When an account/class is deleted, so too does all the data linked to that account."
           ]
         },
         {
@@ -62,9 +63,7 @@
           "paragraphs": [
             "Under applicable law, you have the right to request access to your personal data, and to request correction or deletion.",
             "Since SAFS does not intentionally* store personal data beyond email addresses, the amount of data that can be disclosed is limited.",
-            "However, an email address can be deleted on request, together with all data linked to that account.",
-            "Information about messages and passwords cannot be disclosed by the SAFS data controller in plain text, since this data is stored encrypted and hashed, and the data controller has no technical access to decrypt or restore it.",
-            "Messages can only be accessed within each class account by an authorized student representative."
+            "However, an email address can be deleted on request, together with all data linked to that account."
           ]
         },
         {
@@ -137,9 +136,10 @@
         },
         {
           "heading": "Lagringstid",
-          "paragraphs": [
-            "Data för skoladministratörer och feedback lagras så länge som kontot är aktivt.",
-            "Data för klasser och studentrepresentanter lagras så länge som klassen är aktiv."
+          "bullets": [
+            "Data för skoladministratörer och feedback lagras så länge som kontot finns.",
+            "Data för klasser och studentrepresentanter lagras så länge som klassen finns.",
+            "När ett konto tas bort, raderas även all data länkad till kontot."
           ]
         },
         {
@@ -147,9 +147,7 @@
           "paragraphs": [
             "Enligt lag har du rätt att begära ut dina personuppgifter, få dem rättade eller borttagna.",
             "Eftersom SAFS inte avsiktligt* lagrar några personuppgifter utöver e-postadresser är mängden data som kan lämnas ut begränsad.",
-            "Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot.",
-            "Information om meddelanden och lösenord kan inte lämnas ut av SAFS personuppgiftsansvarig i klartext, eftersom uppgifterna lagras krypterat respektive hashat och personuppgiftsansvarig saknar teknisk åtkomst att dekryptera eller återställa dem.",
-            "Meddelanden kan endast nås inom respektive klasskonto av behörig studentrepresentant."
+            "Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot."
           ]
         },
         {

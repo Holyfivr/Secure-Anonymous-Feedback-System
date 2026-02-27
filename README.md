@@ -1,68 +1,94 @@
-# <center>Secure Anonymous Feedback System (SAFS)</center>
+# Secure Anonymous Feedback System (SAFS)
 
----
-##### [Overview](#overview)
-##### [Core Principles](#core-principles)
-##### [Features](#features)
-##### [Usage Flow](#usage-flow)
----
+SAFS is a security-first service for anonymous student feedback in schools.  
 
-## Overview
-**Secure Anonymous Feedback System (SAFS)** is a SaaS platform designed to enable structured, anonymous feedback within educational environments.
+## Background and Motivation
 
-The system allows schools to provision accounts for student representatives, who in turn collect anonymous feedback from their peers.
+The idea for SAFS came from a desire to provide a safe and anonymous channel for students to share feedback with their schools, without fear of retaliation or exposure. Traditional feedback tools often require accounts, have a limited time window for submission, or store identifiable information, which can discourage honest feedback.
+Even when the feedback goes through another student, there can be concerns about trust and confidentiality.
 
-**SAFS** is built around a strict separation of roles and access:
-schools administer accounts, student representatives manage feedback, and only student representatives can view submitted messages.
+### The SAFS Solution
 
-The platform is designed to ensure privacy, anonymity, and controlled access at every level.
+As a student-representative myself, [I created a solution for my own class for this](https://github.com/Holyfivr/Anonform). An anonymous feedback form with a shared password, where only I, and my fellow student representative, could read the messages.
+The core goal is simple: let students submit feedback safely and anonymously, while ensuring only the assigned student representative can read messages.
 
----
+Since I am studying to become a software developer, I have the ability to build something like that. However, other student-representatives might not have the technical skills to set up a secure and anonymous feedback system on their own, and there are no good off-the-shelf solutions that meet these requirements. So I decided to build SAFS as a free service that other classes can use as well.
 
-## Core Principles
+### What SAFS Is
 
-- **Anonymity by Design**: Feedback is submitted without identity tracking.
+SAFS is a role-based web platform where a school will have one account. This account can create classes, which are managed by class-level admins (student representatives). Each class has a shared password for submitting anonymous feedback. Only the class admins can read the feedback messages, and they cannot be accessed by school-level or super admins.
+The roles and permissions are as follows:
 
-- **Role-Based Access Control**: Schools manage structure, not content.
+| Role | Permissions |
+|------|-------------|
+| `superadmin` | Create/deactivate/delete schools, list schools/classes |
+| `schooladmin` | Create/deactivate/delete classes in own school |
+| `classadmin` | Read/decrypt own class messages, delete messages, reset class feedback password |
+| `anonymous` | Submit feedback with valid class password |
 
-- **Data Isolation**: Feedback is only accessible to the assigned student representative.
+The system is designed so school-level admins can manage structure, but cannot read class feedback content.
 
-- **Security First**: All data is securely stored and access-restricted.
+### Current Development Stage
 
----
+Current status:
 
-## Features
-**School Account Provisioning**
-Schools are provisioned with administrative accounts to manage their study programs and create class-level feedback channels.
+- Core platform is implemented and usable.
+- Security architecture is implemented with encryption, hashing, RBAC, and rate limiting.
+- Privacy policy is in place (English or Swedish).
 
-**Class & Student Representative Management**
-Schools can create class accounts for student representatives.
-Once assigned, the student representative activates their account and manages their own secure feedback channel.
+Planned/next:
 
-**Controlled Feedback Access**
-Schools do not have access to feedback content.
-Only the designated student representative can view and manage submitted feedback.
+- Add proper landing page. It is currently blank, since it hasn't been a priority. Safety first.
+- Create a proper design for the frontend. The current UI is very basic and unstyled, but fully functional.
+- Final logistics/onboarding with schools.
+- Support form for assistance with the service.
+- reCAPTCHA or similar anti-abuse measures if needed (currently relying on rate limits and password protection).
 
-**Anonymous Feedback Submission**
-Students submit feedback anonymously using a class-specific access password defined by the student representative.
-No identity data is collected during submission.
+### Security and Anonymity Model
 
----
+Security and anonymity are first-class concerns in SAFS:
 
-## Usage Flow
-1. School Onboarding
+- `Anonymous posting` via public feedback flow (no student account required).
+- `Role-based access control` via Firebase Auth custom claims (`superadmin`, `schooladmin`, `classadmin`).
+- `Firestore security rules` enforce data boundaries at database level.
+- `Message confidentiality` with AES-256-GCM encryption in Cloud Functions using Secret Manager (`ENCRYPTION_KEY`).
+- `Password protection` for class feedback password with salted SHA-256 hashes.
+- `Rate limiting` in `postMessage` (1 message/min per class + hashed IP key).
+- `XSS hardening` through escaped output and safe DOM text insertion patterns.
+- `Content Security Policy` in `index.html` to restrict script/style/connect sources.
 
-During initial rollout, school accounts are created by the development team. Future versions may include automated onboarding.
+Important boundary:
 
-2. Class Setup
+- Class messages are not readable by `superadmin` or `schooladmin` through Firestore rules.
+- Class message create flow is function-only (not direct client write).
 
-The school creates a class account and assigns it to a student representative.
+### Tech Stack
 
-3. Representative Activation
+- Frontend: HTML5, CSS3, Vanilla JavaScript ES Modules
+- Routing: hash-based SPA router (`#/...`)
+- Backend: Firebase Cloud Functions v2 (Node.js)
+- Auth: Firebase Authentication (Email/Password + custom claims)
+- Database: Cloud Firestore + Firestore Security Rules
+- Secrets: Firebase Functions Secret Manager (`ENCRYPTION_KEY`)
 
-The student representative activates their account and defines a submission password to distribute within their class.
+### Privacy and Compliance
 
-4. Anonymous Submission
+- Privacy policy is available in-app (`#/privacy`) and in `docs/`.
+- English source: [docs/privacy-policy.en.md](docs/privacy-policy.en.md).
+- Swedish source: [docs/privacy-policy.sv.md](docs/privacy-policy.sv.md).
+- SAFS intentionally stores minimal personal data (administrator emails).
 
-Students submit feedback using the class-specific password.
-Messages are securely stored and accessible only to the assigned student representative.
+### Notes
+
+- Firebase web config values in the client are public app identifiers, not secrets.
+- Authorization and data protection rely on Auth claims, Firestore rules, and Cloud Functions checks.
+
+### Legal and Ethical Considerations
+
+- SAFS aims to align with GDPR principles and similar data protection laws by minimizing personal data and providing user rights.
+- Users should be aware of the limitations of anonymity and avoid sharing personally identifiable information in feedback messages or class names, as this data may be stored and is not the intended use of those fields.
+  
+### License
+
+[Proprietary – All Rights Reserved.](LICENSE.MD)
+No use, copying, modification, or distribution is permitted without explicit written permission.
