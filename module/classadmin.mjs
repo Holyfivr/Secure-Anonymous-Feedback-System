@@ -49,7 +49,7 @@ async function renderDashboard(schoolId, classId) {
     /* PASSWORD RESET SECTION */
     const resetPasswordSection      = createElement("div", ["card", "dashboard-section", "dashboard-header"]);
     const resetInput                = createElement("input", ["input-small", "reset-feedback-password"]);
-    const resetUserPassword         = createElement("button", [], "Send link to reset user password", "resetPasswordLink");
+    const resetUserPassword         = createElement("button", [], "Send password reset link", "resetPasswordLink");
     const resetFeedbackPasswordBtn  = createElement("button", ["btn-small"], "Reset");
     const divider                   = createElement ("hr");
     
@@ -58,7 +58,7 @@ async function renderDashboard(schoolId, classId) {
     insertElement       (resetPasswordSection, divider);
     formatElement       (divider, {}, [], { style: "margin: 1.5rem 0; width:200px;" });
     addNewElement       (resetPasswordSection, "label", [], "Set new feedback password");
-    formatElement       (resetInput, {}, [], { type: "text", placeholder: "New password ..." });
+    formatElement       (resetInput, {}, [], { type: "text", placeholder: "New password..." });
     insertElement       (resetPasswordSection, resetInput);
     formatElement       (resetFeedbackPasswordBtn, {}, [], { type: "button" });
     insertElement       (resetPasswordSection, resetFeedbackPasswordBtn);

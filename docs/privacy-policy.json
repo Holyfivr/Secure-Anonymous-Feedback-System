@@ -30,7 +30,7 @@
         {
           "heading": "Other data in the service",
           "paragraphs": [
-            "SAFS also stores schools, classes, and feedback content in order for the system to function.",
+            "SAFS also stores schools, classes, and feedback content for the system to function.",
             "This data is generally not personal data by itself, but it may become personal data if someone enters identifying information in free text."
           ]
         },
@@ -109,7 +109,7 @@
         {
           "heading": "Varför e-postadress lagras",
           "paragraphs": [
-            "E-postadress behövs för att tjänsten ska fungera: skapa och hantera administratörskonton, möjliggöra inloggning, tilldela och kontrollera admin-behörighet."
+            "E-postadress behövs för att tjänsten ska fungera: skapa och hantera administratörskonton, möjliggöra inloggning, tilldela och kontrollera adminbehörighet."
           ]
         },
         {
