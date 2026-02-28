@@ -18,13 +18,24 @@
         {
           "heading": "What personal data is processed",
           "paragraphs": [
-            "The only personal data SAFS intentionally* stores is administrator email addresses."
+            "SAFS processes administrator email addresses.",
+            "SAFS also processes limited anti-abuse metadata for rate limiting (a hashed, truncated representation of request IP + class identifier + timestamp).",
+            "Plain IP addresses are not intentionally stored in clear text in SAFS data records."
           ]
         },
         {
           "heading": "Why email addresses are stored",
           "paragraphs": [
             "Email addresses are required for the service to function: create and manage administrator accounts, enable authentication, and assign and enforce admin permissions."
+          ]
+        },
+        {
+          "heading": "Why IP-related metadata is used",
+          "paragraphs": [
+            "IP-related metadata is used to protect both users and the service against abuse, such as spam, brute-force attempts, and other automated malicious traffic.",
+            "This also reduces the risk of cost-driving abuse and helps keep the service safer and more stable for legitimate users.",
+            "SAFS does not intentionally store plain IP addresses in data records; instead, it stores a hashed/truncated representation for rate limiting.",
+            "This information is not used for profiling and is not intended to identify students."
           ]
         },
         {
@@ -55,6 +66,7 @@
           "bullets": [
             "Data for school administrators and feedback is stored as long as the account exists.",
             "Data for classes and student representatives is stored as long as the class exists.",
+            "Anti-abuse rate-limit metadata is stored in pseudonymized form and retained as long as needed to protect the service from abuse.",
             "When an account/class is deleted, so too does all the data linked to that account."
           ]
         },
@@ -102,13 +114,24 @@
         {
           "heading": "Vilka personuppgifter behandlas",
           "paragraphs": [
-            "Den enda personuppgift som SAFS avsiktligt* lagrar är e-postadress för administratörskonton."
+            "SAFS behandlar e-postadress för administratörskonton.",
+            "SAFS behandlar också begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + klassidentifierare + tidsstämpel).",
+            "Klartext-IP lagras inte avsiktligt i SAFS datalagring."
           ]
         },
         {
           "heading": "Varför e-postadress lagras",
           "paragraphs": [
             "E-postadress behövs för att tjänsten ska fungera: skapa och hantera administratörskonton, möjliggöra inloggning, tilldela och kontrollera adminbehörighet."
+          ]
+        },
+        {
+          "heading": "Varför IP-relaterad metadata används",
+          "paragraphs": [
+            "IP-relaterad metadata används för att skydda både användarna och tjänsten mot missbruk, till exempel spam, brute-force-försök och annan automatiserad skadlig trafik.",
+            "Det minskar även risken för kostnadsdrivande abuse och bidrar till en tryggare och mer stabil tjänst för legitima användare.",
+            "SAFS lagrar inte avsiktligt klartext-IP i datalagret, utan en hashad/trunkerad representation för rate limiting.",
+            "Informationen används inte för profilering och är inte avsedd att identifiera elever."
           ]
         },
         {
@@ -139,6 +162,7 @@
           "bullets": [
             "Data för skoladministratörer och feedback lagras så länge som kontot finns.",
             "Data för klasser och studentrepresentanter lagras så länge som klassen finns.",
+            "Anti-missbruksmetadata för rate limiting lagras i pseudonymiserad form och sparas så länge det behövs för att skydda tjänsten mot missbruk.",
             "När ett konto tas bort, raderas även all data länkad till kontot."
           ]
         },

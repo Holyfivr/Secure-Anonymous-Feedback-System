@@ -15,13 +15,107 @@ const crypto = require("crypto");
 // Encryption key for message confidentiality (set via: firebase functions:secrets:set ENCRYPTION_KEY)
 const encryptionKey = defineSecret("ENCRYPTION_KEY");
 
-// --- Helper: salted SHA-256 ---
-function hashPassword(password, salt) {
+const FEEDBACK_PASSWORD_SCRYPT_PARAMS = {
+  N: 16384,
+  r: 8,
+  p: 1,
+  keyLen: 32,
+  maxmem: 64 * 1024 * 1024,
+};
+
+// --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
+function hashPasswordLegacySha256(password, salt) {
   return crypto.createHash("sha256").update(salt + password).digest("hex");
 }
 
 function generateSalt() {
   return crypto.randomBytes(16).toString("hex");
+}
+
+function timingSafeHexEqual(aHex, bHex) {
+  if (!aHex || !bHex || aHex.length !== bHex.length) return false;
+
+  try {
+    const a = Buffer.from(aHex, "hex");
+    const b = Buffer.from(bHex, "hex");
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+function scryptHash(password, saltHex, params = FEEDBACK_PASSWORD_SCRYPT_PARAMS) {
+  const salt = Buffer.from(saltHex, "hex");
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(
+        password,
+        salt,
+        params.keyLen,
+        {N: params.N, r: params.r, p: params.p, maxmem: params.maxmem},
+        (err, derivedKey) => {
+          if (err) return reject(err);
+          resolve(derivedKey.toString("hex"));
+        },
+    );
+  });
+}
+
+async function createFeedbackPasswordRecord(password) {
+  const salt = generateSalt();
+  const hash = await scryptHash(password, salt);
+
+  return {
+    feedbackPasswordHash: hash,
+    feedbackPasswordSalt: salt,
+    feedbackPasswordAlgo: "scrypt",
+    feedbackPasswordParams: {
+      N: FEEDBACK_PASSWORD_SCRYPT_PARAMS.N,
+      r: FEEDBACK_PASSWORD_SCRYPT_PARAMS.r,
+      p: FEEDBACK_PASSWORD_SCRYPT_PARAMS.p,
+      keyLen: FEEDBACK_PASSWORD_SCRYPT_PARAMS.keyLen,
+    },
+  };
+}
+
+async function verifyFeedbackPassword(classData, password) {
+  if (!classData?.feedbackPasswordHash) {
+    return {ok: false};
+  }
+
+  // Current format: scrypt with per-class salt and stored params
+  if (classData.feedbackPasswordAlgo === "scrypt") {
+    const params = classData.feedbackPasswordParams || {
+      N: FEEDBACK_PASSWORD_SCRYPT_PARAMS.N,
+      r: FEEDBACK_PASSWORD_SCRYPT_PARAMS.r,
+      p: FEEDBACK_PASSWORD_SCRYPT_PARAMS.p,
+      keyLen: FEEDBACK_PASSWORD_SCRYPT_PARAMS.keyLen,
+    };
+
+    const salt = classData.feedbackPasswordSalt;
+    if (!salt) return {ok: false};
+
+    const computed = await scryptHash(password, salt, {
+      N: params.N,
+      r: params.r,
+      p: params.p,
+      keyLen: params.keyLen,
+      maxmem: FEEDBACK_PASSWORD_SCRYPT_PARAMS.maxmem,
+    });
+
+    return {ok: timingSafeHexEqual(computed, classData.feedbackPasswordHash)};
+  }
+
+  // Legacy format: salted SHA-256 (or unsalted when salt is missing)
+  const legacySalt = classData.feedbackPasswordSalt || "";
+  const legacyHash = hashPasswordLegacySha256(password, legacySalt);
+  const isValidLegacy = timingSafeHexEqual(legacyHash, classData.feedbackPasswordHash);
+
+  if (!isValidLegacy) return {ok: false};
+
+  // Seamless upgrade path: migrate legacy hash to scrypt on successful verification
+  const migratedRecord = await createFeedbackPasswordRecord(password);
+  return {ok: true, migratedRecord};
 }
 
 // --- Helper: AES-256-GCM encryption ---
@@ -93,7 +187,7 @@ async function deleteAllDocuments(collectionRef) {
 /* ========================================== */
 // LIST ACTIVE SCHOOLS (public, for picker)
 /* ========================================== */
-exports.listSchools = onCall({region: "europe-west1"}, async () => {
+exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true}, async () => {
   const snapshot = await db.collection("schools").where("active", "==", true).get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
@@ -101,7 +195,7 @@ exports.listSchools = onCall({region: "europe-west1"}, async () => {
 /* ========================================== */
 // LIST ACTIVE CLASSES (public, for picker)
 /* ========================================== */
-exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
+exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   const {schoolId} = request.data;
   if (!schoolId) {
     throw new HttpsError("invalid-argument", "Missing schoolId.");
@@ -117,7 +211,7 @@ exports.listClasses = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // GET CLASS NAME (public, for feedback form)
 /* ========================================== */
-exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
+exports.getClassName = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   const {schoolId, classId} = request.data;
   if (!schoolId || !classId) {
     throw new HttpsError("invalid-argument", "Missing schoolId or classId.");
@@ -136,7 +230,7 @@ exports.getClassName = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // CREATE SCHOOL (superadmin only)
 /* ========================================== */
-exports.createSchool = onCall({region: "europe-west1"}, async (request) => {
+exports.createSchool = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolName, adminEmail, adminPassword} = request.data;
@@ -171,7 +265,7 @@ exports.createSchool = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // CREATE CLASS (school admin only)
 /* ========================================== */
-exports.createClass = onCall({region: "europe-west1"}, async (request) => {
+exports.createClass = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -184,9 +278,8 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
     throw new HttpsError("invalid-argument", "Post password must be 6+ characters.");
   }
 
-  // Hash the post password (salted SHA-256)
-  const salt = generateSalt();
-  const feedbackPasswordHash = hashPassword(feedbackPassword, salt);
+  // Hash feedback password with scrypt
+  const feedbackPasswordRecord = await createFeedbackPasswordRecord(feedbackPassword);
 
   const userRecord = await createUserOrThrow(adminEmail, adminPassword);
 
@@ -195,8 +288,7 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
   await classRef.set({
     name: className,
     active: true,
-    feedbackPasswordHash,
-    feedbackPasswordSalt: salt,
+    ...feedbackPasswordRecord,
     adminUid: userRecord.uid,
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -214,7 +306,7 @@ exports.createClass = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // RESET CLASS POST PASSWORD (class admin only)
 /* ========================================== */
-exports.resetFeedbackPassword = onCall({region: "europe-west1"}, async (request) => {
+exports.resetFeedbackPassword = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   requireRole(request, "classadmin");
   const schoolId = request.auth.token.schoolId;
   const classId = request.auth.token.classId;
@@ -226,10 +318,9 @@ exports.resetFeedbackPassword = onCall({region: "europe-west1"}, async (request)
     throw new HttpsError("invalid-argument", "Password must be 6+ characters.");
   }
 
-  const salt = generateSalt();
-  const feedbackPasswordHash = hashPassword(normalizedPassword, salt);
+  const feedbackPasswordRecord = await createFeedbackPasswordRecord(normalizedPassword);
   const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
-  await classRef.update({feedbackPasswordHash, feedbackPasswordSalt: salt});
+  await classRef.update(feedbackPasswordRecord);
 
   return {status: "ok"};
 });
@@ -237,7 +328,7 @@ exports.resetFeedbackPassword = onCall({region: "europe-west1"}, async (request)
 /* ========================================== */
 // POST MESSAGE (anonymous, rate-limited)
 /* ========================================== */
-exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
+exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true}, async (request) => {
   const {schoolId, classId, text, password} = request.data;
 
   if (!schoolId || !classId || !text || !password) {
@@ -258,12 +349,16 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"},
     throw new HttpsError("not-found", "Class not found or inactive.");
   }
 
-  // Verify post password (salted SHA-256, backwards compatible with unsalted)
+  // Verify post password (scrypt; legacy SHA-256 auto-migrated on success)
   const classData = classDoc.data();
-  const salt = classData.feedbackPasswordSalt || "";
-  const hash = hashPassword(password, salt);
-  if (hash !== classData.feedbackPasswordHash) {
+  const verification = await verifyFeedbackPassword(classData, password);
+  if (!verification.ok) {
     throw new HttpsError("permission-denied", "Wrong password.");
+  }
+
+  if (verification.migratedRecord) {
+    // Best-effort legacy hash migration to scrypt without impacting user flow.
+    await classRef.update(verification.migratedRecord).catch(() => {});
   }
 
   // Rate limit: per IP per class (60s cooldown)
@@ -296,7 +391,7 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1"},
 /* ========================================== */
 // LIST MESSAGES (classadmin only, decrypts)
 /* ========================================== */
-exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1"}, async (request) => {
+exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -330,7 +425,7 @@ exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1"}
 /* ========================================== */
 // DELETE CLASS (school admin only)
 /* ========================================== */
-exports.deleteClass = onCall({region: "europe-west1"}, async (request) => {
+exports.deleteClass = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -373,7 +468,7 @@ exports.deleteClass = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // DELETE SCHOOL (superadmin only)
 /* ========================================== */
-exports.deleteSchool = onCall({region: "europe-west1"}, async (request) => {
+exports.deleteSchool = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolId} = request.data;
@@ -427,7 +522,7 @@ exports.deleteSchool = onCall({region: "europe-west1"}, async (request) => {
 /* ========================================== */
 // LIST CLASS NAMES (superadmin, for overview)
 /* ========================================== */
-exports.listClassNames = onCall({region: "europe-west1"}, async (request) => {
+exports.listClassNames = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -458,7 +553,7 @@ exports.listClassNames = onCall({region: "europe-west1"}, async (request) => {
 // - Superadmin: can toggle any school or class
 // - School admin: can toggle own classes only
 /* ========================================== */
-exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
+exports.toggleActive = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -485,7 +580,7 @@ exports.toggleActive = onCall({region: "europe-west1"}, async (request) => {
     return {active: !doc.data().active};
   }
 
-  // Superadmin can toggle anything
+  // Superadmin can toggle anything (but classes are not activated)
   if (role === "superadmin") {
     if (classId) {
       const classRef = db.collection("schools").doc(schoolId).collection("classes").doc(classId);
