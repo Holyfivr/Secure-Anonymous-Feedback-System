@@ -39,7 +39,7 @@ Contact: <joelseger87@gmail.com>
 8. **Retention**
     - Data for school administrators and feedback is stored as long as the account exists.
     - Data for classes and student representatives is stored as long as the class exists.
-    - Anti-abuse rate-limit metadata is stored in pseudonymized form and retained as long as needed to protect the service from abuse.
+    - Anti-abuse rate-limit metadata is stored in pseudonymized form and configured for TTL cleanup after 24 hours (actual deletion timing depends on Firestore TTL processing).
     - When an account/class is deleted, so too does all the data linked to that account.
 
 9. **Rights**
