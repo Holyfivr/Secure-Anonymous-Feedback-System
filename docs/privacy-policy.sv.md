@@ -8,37 +8,48 @@ Senast uppdaterad: 2026-02-25
     Kontakt: <joelseger87@gmail.com>
 
 2. **Vilka personuppgifter behandlas**
-    Den enda personuppgift som SAFS avsiktligt* lagrar är e-postadress för administratörskonton.
+    SAFS behandlar:
+    - E-postadress för administratörskonton.
+    - Begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + klassidentifierare + tidsstämpel).
+    Klartext-IP lagras inte avsiktligt i SAFS datalagring.
 
 3. **Varför e-postadress lagras**
     E-postadress behövs för att tjänsten ska fungera: skapa och hantera administratörskonton,
     möjliggöra inloggning, tilldela och kontrollera adminbehörighet.
 
-4. **Övrig data i tjänsten**
+4. **Varför IP-relaterad metadata används**
+    IP-relaterad metadata används för att skydda både användarna och tjänsten mot missbruk,
+    till exempel spam, brute-force-försök och annan automatiserad skadlig trafik.
+    Det minskar även risken för kostnadsdrivande abuse och bidrar till en tryggare och mer stabil tjänst för legitima användare.
+    SAFS lagrar inte avsiktligt klartext-IP i datalagret, utan en hashad/trunkerad representation för rate limiting.
+    Informationen används inte för profilering och är inte avsedd att identifiera elever.
+
+5. **Övrig data i tjänsten**
     SAFS lagrar även skolor, klasser och feedbackinnehåll för att systemet ska fungera.
     Denna data är normalt inte personuppgifter i sig, men kan bli det om någon skriver in identifierande information i fritext.
 
-5. **Säkerhet**
+6. **Säkerhet**
    - Feedback lagras krypterat i databasen.
    - Inloggning för admin- och studentrepresentantkonton hanteras av Firebase Authentication**.
    - Klassens feedbacklösenord lagras hashat och saltat, och kan inte återställas till klartext.
    - Datatillgång begränsas genom rollbaserad behörighetskontroll.
   
-6. **Tredjepartstjänster**
+7. **Tredjepartstjänster**
     SAFS använder Google Firebase och Google Cloud för autentisering, datalagring och serverfunktioner.
     Google behandlar data enligt sina villkor som teknisk leverantör/biträde.
 
-7. **Lagringstid**
+8. **Lagringstid**
     - Data för skoladministratörer och feedback lagras så länge som kontot finns.
     - Data för klasser och studentrepresentanter lagras så länge som klassen finns.
+    - Anti-missbruksmetadata för rate limiting lagras i pseudonymiserad form och sparas så länge det behövs för att skydda tjänsten mot missbruk.
     - När ett konto tas bort, raderas även all data länkad till kontot.
 
-8. **Rättigheter**
+9. **Rättigheter**
     Enligt lag har du rätt att begära ut dina personuppgifter, få dem rättade eller borttagna.
     Eftersom SAFS inte avsiktligt* lagrar några personuppgifter utöver e-postadresser är mängden data som kan lämnas ut begränsad.
     Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot.
 
-9. **Ändringar**
+10. **Ändringar**
     Texten kan uppdateras vid förändringar i tjänsten eller lagkrav.
     Aktuell version publiceras i SAFS.
 

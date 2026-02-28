@@ -1,11 +1,13 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { initializeApp } 
+    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { getFirestore, collection, getDocs, query, doc, getDoc, deleteDoc, where }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } 
+    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
 const firebaseConfig = {
     apiKey              : "AIzaSyAOJ2zWs2Gif3ELa-4Ti8PEKOX3q5czZDo",
@@ -63,3 +65,12 @@ export {
     httpsCallable,
     collection, getDocs, query, doc, getDoc, deleteDoc, where,
 };
+
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+
+initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider("6LeV4XosAAAAABj7R8xWimvDdZHYZlYe9J9cXSxt"),
+  isTokenAutoRefreshEnabled: true,
+});

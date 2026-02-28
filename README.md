@@ -76,7 +76,7 @@ Important boundary:
 - Privacy policy is available in-app (`#/privacy`) and in `docs/`.
 - English source: [docs/privacy-policy.en.md](docs/privacy-policy.en.md).
 - Swedish source: [docs/privacy-policy.sv.md](docs/privacy-policy.sv.md).
-- SAFS intentionally stores minimal personal data (administrator emails).
+- SAFS stores minimal personal data (administrator emails) and limited anti-abuse metadata for rate limiting (hashed IP-based key + timestamp).
 
 ### Notes
 
