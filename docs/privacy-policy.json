@@ -5,7 +5,7 @@
       "buttonLabel": "English",
       "title": "Privacy and Data Handling (SAFS)",
       "lastUpdatedLabel": "Last updated",
-      "updatedAt": "2026-02-25",
+      "updatedAt": "2026-02-28",
       "loadError": "Could not load privacy policy.",
       "sections": [
         {
@@ -19,7 +19,7 @@
           "heading": "What personal data is processed",
           "paragraphs": [
             "SAFS processes administrator email addresses.",
-            "SAFS also processes limited anti-abuse metadata for rate limiting (a hashed, truncated representation of request IP + class identifier + timestamp).",
+            "SAFS also processes limited anti-abuse metadata for rate limiting (a hashed, truncated representation of request IP + request-context identifier + timestamp).",
             "Plain IP addresses are not intentionally stored in clear text in SAFS data records."
           ]
         },
@@ -101,7 +101,7 @@
       "buttonLabel": "Svenska",
       "title": "Integritet och datahantering (SAFS)",
       "lastUpdatedLabel": "Senast uppdaterad",
-      "updatedAt": "2026-02-25",
+      "updatedAt": "2026-02-28",
       "loadError": "Kunde inte ladda integritetspolicyn.",
       "sections": [
         {
@@ -115,7 +115,7 @@
           "heading": "Vilka personuppgifter behandlas",
           "paragraphs": [
             "SAFS behandlar e-postadress för administratörskonton.",
-            "SAFS behandlar också begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + klassidentifierare + tidsstämpel).",
+            "SAFS behandlar också begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + anropskontext/identifierare + tidsstämpel).",
             "Klartext-IP lagras inte avsiktligt i SAFS datalagring."
           ]
         },

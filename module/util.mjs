@@ -55,12 +55,16 @@ export async function resetPassword(e) {
 /* Redirects logged-in users away from the login page to their respective dashboards. */
 export function redirectIfLoggedIn() {
     const loggedInUser = localStorage.getItem("currentUser");
-    if (loggedInUser) {
+    if (!loggedInUser) return;
+
+    try {
         const user = JSON.parse(loggedInUser);
-        if (window.location.hash === "#/login") {
+        if (window.location.hash === "#/login" && user?.role) {
             if        (user.role === "superadmin")    window.location.hash = "#/superadmin";
             else if   (user.role === "schooladmin")   window.location.hash = "#/schooladmin";
             else if   (user.role === "classadmin")    window.location.hash = "#/classadmin";
         }
+    } catch {
+        localStorage.removeItem("currentUser");
     }
 }

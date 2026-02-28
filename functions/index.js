@@ -23,6 +23,14 @@ const FEEDBACK_PASSWORD_SCRYPT_PARAMS = {
   maxmem: 64 * 1024 * 1024,
 };
 const RATE_LIMIT_TTL_MS = 24 * 60 * 60 * 1000;
+const ATTEMPT_WINDOW_MS = 60 * 1000;
+const MAX_ATTEMPTS_PER_WINDOW = 20;
+const ATTEMPT_BLOCK_MS = 20 * 60 * 1000;
+const PUBLIC_PICKER_WINDOW_MS = 60 * 1000;
+const PUBLIC_PICKER_MAX_PER_WINDOW = 60;
+const PUBLIC_PICKER_BLOCK_MS = 10 * 60 * 1000;
+const LIST_MESSAGES_DEFAULT_LIMIT = 100;
+const LIST_MESSAGES_MAX_LIMIT = 200;
 
 // --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
 function hashPasswordLegacySha256(password, salt) {
@@ -185,10 +193,103 @@ async function deleteAllDocuments(collectionRef) {
   }
 }
 
+async function enforcePostAttemptRateLimit(rateLimitRef) {
+  const now = Date.now();
+  const nowTs = Timestamp.fromMillis(now);
+  const expiresAt = Timestamp.fromMillis(now + RATE_LIMIT_TTL_MS);
+
+  const state = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(rateLimitRef);
+    const data = snap.exists ? snap.data() : {};
+
+    const blockedUntilMs = data.blockedUntil?.toMillis?.() || 0;
+    if (blockedUntilMs > now) {
+      return {
+        blocked: true,
+        blockedUntilMs,
+      };
+    }
+
+    const windowStartMs = data.windowStartAt?.toMillis?.() || now;
+    const windowExpired = now - windowStartMs >= ATTEMPT_WINDOW_MS;
+    const attempts = windowExpired ? 1 : (data.attemptCount || 0) + 1;
+    const nextWindowStartMs = windowExpired ? now : windowStartMs;
+    const nextBlockedUntilMs = attempts > MAX_ATTEMPTS_PER_WINDOW ?
+      now + ATTEMPT_BLOCK_MS :
+      0;
+
+    tx.set(rateLimitRef, {
+      attemptCount: attempts,
+      windowStartAt: Timestamp.fromMillis(nextWindowStartMs),
+      blockedUntil: nextBlockedUntilMs ? Timestamp.fromMillis(nextBlockedUntilMs) : null,
+      lastAttemptAt: nowTs,
+      expiresAt,
+    }, {merge: true});
+
+    return {
+      blocked: nextBlockedUntilMs > now,
+      blockedUntilMs: nextBlockedUntilMs,
+    };
+  });
+
+  if (state.blocked) {
+    throw new HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in 20 minutes.",
+    );
+  }
+}
+
+async function enforcePublicPickerRateLimit(request, endpointName) {
+  const ip = request.rawRequest?.ip || "unknown";
+  const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  const docRef = db.collection("rateLimits").doc(`public_${endpointName}_${ipHash}`);
+  const now = Date.now();
+  const nowTs = Timestamp.fromMillis(now);
+  const expiresAt = Timestamp.fromMillis(now + RATE_LIMIT_TTL_MS);
+
+  const state = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = snap.exists ? snap.data() : {};
+
+    const blockedUntilMs = data.blockedUntil?.toMillis?.() || 0;
+    if (blockedUntilMs > now) {
+      return {blocked: true};
+    }
+
+    const windowStartMs = data.windowStartAt?.toMillis?.() || now;
+    const windowExpired = now - windowStartMs >= PUBLIC_PICKER_WINDOW_MS;
+    const attempts = windowExpired ? 1 : (data.requestCount || 0) + 1;
+    const nextWindowStartMs = windowExpired ? now : windowStartMs;
+    const nextBlockedUntilMs = attempts > PUBLIC_PICKER_MAX_PER_WINDOW ?
+      now + PUBLIC_PICKER_BLOCK_MS :
+      0;
+
+    tx.set(docRef, {
+      endpoint: endpointName,
+      requestCount: attempts,
+      windowStartAt: Timestamp.fromMillis(nextWindowStartMs),
+      blockedUntil: nextBlockedUntilMs ? Timestamp.fromMillis(nextBlockedUntilMs) : null,
+      lastRequestAt: nowTs,
+      expiresAt,
+    }, {merge: true});
+
+    return {blocked: nextBlockedUntilMs > now};
+  });
+
+  if (state.blocked) {
+    throw new HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again later.",
+    );
+  }
+}
+
 /* ========================================== */
 // LIST ACTIVE SCHOOLS (public, for picker)
 /* ========================================== */
-exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true}, async () => {
+exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+  await enforcePublicPickerRateLimit(request, "listSchools");
   const snapshot = await db.collection("schools").where("active", "==", true).get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
@@ -197,6 +298,7 @@ exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true}, as
 // LIST ACTIVE CLASSES (public, for picker)
 /* ========================================== */
 exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+  await enforcePublicPickerRateLimit(request, "listClasses");
   const {schoolId} = request.data;
   if (!schoolId) {
     throw new HttpsError("invalid-argument", "Missing schoolId.");
@@ -213,6 +315,7 @@ exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true}, as
 // GET CLASS NAME (public, for feedback form)
 /* ========================================== */
 exports.getClassName = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+  await enforcePublicPickerRateLimit(request, "getClassName");
   const {schoolId, classId} = request.data;
   if (!schoolId || !classId) {
     throw new HttpsError("invalid-argument", "Missing schoolId or classId.");
@@ -247,18 +350,31 @@ exports.createSchool = onCall({region: "europe-west1", enforceAppCheck: true}, a
 
   // Create school document (with adminUid so we can delete the account later)
   const schoolRef = db.collection("schools").doc();
-  await schoolRef.set({
-    name: schoolName,
-    active: true,
-    adminUid: userRecord.uid,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  let schoolDocCreated = false;
 
-  // Set custom claims with schoolId
-  await getAuth().setCustomUserClaims(userRecord.uid, {
-    role: "schooladmin",
-    schoolId: schoolRef.id,
-  });
+  try {
+    await schoolRef.set({
+      name: schoolName,
+      active: true,
+      adminUid: userRecord.uid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    schoolDocCreated = true;
+
+    // Set custom claims with schoolId
+    await getAuth().setCustomUserClaims(userRecord.uid, {
+      role: "schooladmin",
+      schoolId: schoolRef.id,
+    });
+  } catch (err) {
+    if (schoolDocCreated) {
+      await schoolRef.delete().catch(() => {});
+    }
+    await getAuth().deleteUser(userRecord.uid).catch(() => {});
+
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "Could not create school. Please try again later.");
+  }
 
   return {schoolId: schoolRef.id, adminUid: userRecord.uid};
 });
@@ -286,20 +402,33 @@ exports.createClass = onCall({region: "europe-west1", enforceAppCheck: true}, as
 
   // Create class document
   const classRef = db.collection("schools").doc(schoolId).collection("classes").doc();
-  await classRef.set({
-    name: className,
-    active: true,
-    ...feedbackPasswordRecord,
-    adminUid: userRecord.uid,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  let classDocCreated = false;
 
-  // Set custom claims
-  await getAuth().setCustomUserClaims(userRecord.uid, {
-    role: "classadmin",
-    schoolId: schoolId,
-    classId: classRef.id,
-  });
+  try {
+    await classRef.set({
+      name: className,
+      active: true,
+      ...feedbackPasswordRecord,
+      adminUid: userRecord.uid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    classDocCreated = true;
+
+    // Set custom claims
+    await getAuth().setCustomUserClaims(userRecord.uid, {
+      role: "classadmin",
+      schoolId: schoolId,
+      classId: classRef.id,
+    });
+  } catch (err) {
+    if (classDocCreated) {
+      await classRef.delete().catch(() => {});
+    }
+    await getAuth().deleteUser(userRecord.uid).catch(() => {});
+
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "Could not create class. Please try again later.");
+  }
 
   return {classId: classRef.id, adminUid: userRecord.uid};
 });
@@ -350,6 +479,12 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
     throw new HttpsError("not-found", "Class not found or inactive.");
   }
 
+  // Count all attempts (including wrong passwords) to close brute-force gaps.
+  const ip = request.rawRequest?.ip || "unknown";
+  const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  const rateLimitRef = db.collection("rateLimits").doc(`${classId}_${ipHash}`);
+  await enforcePostAttemptRateLimit(rateLimitRef);
+
   // Verify post password (scrypt; legacy SHA-256 auto-migrated on success)
   const classData = classDoc.data();
   const verification = await verifyFeedbackPassword(classData, password);
@@ -362,10 +497,7 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
     await classRef.update(verification.migratedRecord).catch(() => {});
   }
 
-  // Rate limit: per IP per class (60s cooldown). Docs are cleaned with Firestore TTL.
-  const ip = request.rawRequest?.ip || "unknown";
-  const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
-  const rateLimitRef = db.collection("rateLimits").doc(`${classId}_${ipHash}`);
+  // Rate limit: per IP per class (60s cooldown after successful posting).
   const rateLimitDoc = await rateLimitRef.get();
 
   if (rateLimitDoc.exists) {
@@ -405,12 +537,27 @@ exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1",
 
   const schoolId = request.auth.token.schoolId;
   const classId = request.auth.token.classId;
+  const limitRaw = Number(request.data?.limit);
+  const pageSize = Number.isInteger(limitRaw) ?
+    Math.min(Math.max(limitRaw, 1), LIST_MESSAGES_MAX_LIMIT) :
+    LIST_MESSAGES_DEFAULT_LIMIT;
+  const pageTokenRaw = request.data?.pageToken;
 
   const messagesRef = db.collection("schools").doc(schoolId)
       .collection("classes").doc(classId).collection("messages");
-  const snapshot = await messagesRef.orderBy("createdAt", "desc").get();
+  let messagesQuery = messagesRef.orderBy("createdAt", "desc").limit(pageSize);
 
-  return snapshot.docs.map((doc) => {
+  if (pageTokenRaw != null) {
+    const tokenMillis = Number(pageTokenRaw);
+    if (!Number.isFinite(tokenMillis) || tokenMillis <= 0) {
+      throw new HttpsError("invalid-argument", "Invalid pageToken.");
+    }
+    messagesQuery = messagesQuery.startAfter(Timestamp.fromMillis(tokenMillis));
+  }
+
+  const snapshot = await messagesQuery.get();
+
+  const messages = snapshot.docs.map((doc) => {
     const data = doc.data();
 
     // Decrypt message (fallback to raw text for old unencrypted messages)
@@ -424,6 +571,19 @@ exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1",
     const createdAt = data.createdAt?.toDate()?.toISOString() || null;
     return {id: doc.id, text, createdAt};
   });
+
+  // Backwards compatibility: old clients expect an array payload.
+  if (request.data?.limit == null && pageTokenRaw == null) {
+    return messages;
+  }
+
+  let nextPageToken = null;
+  if (snapshot.size === pageSize && snapshot.docs.length > 0) {
+    const lastCreatedAt = snapshot.docs[snapshot.docs.length - 1].data().createdAt;
+    nextPageToken = lastCreatedAt?.toMillis?.()?.toString() || null;
+  }
+
+  return {messages, nextPageToken};
 });
 
 /* ========================================== */

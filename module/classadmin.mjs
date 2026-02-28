@@ -59,7 +59,7 @@ async function renderDashboard(schoolId, classId) {
     insertElement       (resetPasswordSection, divider);
     formatElement       (divider, {}, [], { style: "margin: 1.5rem 0; width:200px;" });
     addNewElement       (resetPasswordSection, "label", [], "Set new feedback password");
-    formatElement       (resetInput, {}, [], { type: "text", placeholder: "New password..." });
+    formatElement       (resetInput, {}, [], { type: "password", autocomplete: "new-password", placeholder: "New password..." });
     insertElement       (resetPasswordSection, resetInput);
     formatElement       (resetFeedbackPasswordBtn, {}, [], { type: "button" });
     insertElement       (resetPasswordSection, resetFeedbackPasswordBtn);
