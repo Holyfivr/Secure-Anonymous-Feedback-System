@@ -1,7 +1,7 @@
 
 # Privacy and Data Handling (SAFS)
 
-Last updated: 2026-02-25
+Last updated: 2026-02-28
 
 1. **Data Controller**
 The data controller for SAFS is Joel Seger.
@@ -10,7 +10,7 @@ Contact: <joelseger87@gmail.com>
 2. **What personal data is processed**
     SAFS processes:
     - Administrator email addresses.
-    - Limited anti-abuse metadata for rate limiting (a hashed, truncated representation of request IP + class identifier + timestamp).
+    - Limited anti-abuse metadata for rate limiting (a hashed, truncated representation of request IP + request-context identifier + timestamp).
     Plain IP addresses are not intentionally stored in clear text in SAFS data records.
 
 3. **Why email addresses are stored**

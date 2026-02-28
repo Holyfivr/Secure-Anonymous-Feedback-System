@@ -55,9 +55,9 @@ export async function renderFeedbackPage() {
     showSpinner                 (schoolGroup);  
 
     /* Load schools */
-    loadSchools(schoolGroup, schoolSelect);
+    loadSchools(schoolGroup, schoolSelect, error);
     /* Load classes when a school is selected */
-    loadClasses(schoolSelect, classGroup, classSelect);
+    loadClasses(schoolSelect, classGroup, classSelect, error);
 
     /* Navigate to feedback form */
     form.addEventListener("submit", (e) => {
@@ -162,12 +162,17 @@ async function handlePostMessage(e, schoolId, classId) {
         e.target.reset();
         document.querySelector(".char-counter").textContent = "0 / 500";
     } catch (err) {
+        const normalizedMessage = String(err?.message || "").toLowerCase();
         feedbackStatus.classList.remove("success-text");
         feedbackStatus.classList.add("error-text");
         if (err.code === "functions/permission-denied") {
             feedbackStatus.textContent = "Wrong password.";
         } else if (err.code === "functions/resource-exhausted") {
-            feedbackStatus.textContent = "Wait 1 minute between messages.";
+            if (normalizedMessage.includes("too many attempts") || normalizedMessage.includes("20 minutes")) {
+                feedbackStatus.textContent = "Too many attempts. Try again in 20 minutes.";
+            } else {
+                feedbackStatus.textContent = "Wait 1 minute between messages.";
+            }
         } else {
             feedbackStatus.textContent = err.message || "Failed to send feedback.";
         }
@@ -180,8 +185,10 @@ async function handlePostMessage(e, schoolId, classId) {
 /* ========================================== */
 
 /* Loads schools into the school select dropdown. */
-async function loadSchools(schoolGroup, schoolSelect) {
+async function loadSchools(schoolGroup, schoolSelect, pickerError) {
      try {
+        // Clear previous picker errors before new load
+        if (pickerError) pickerError.textContent = "";
         const result = await fn.listSchools();
         const schoolPlaceholder = createElement("option", [], "Select school...");
 
@@ -197,22 +204,33 @@ async function loadSchools(schoolGroup, schoolSelect) {
             insertElement       (schoolSelect, option);
         });
     } catch (err) {
-        hideSpinner             (schoolGroup);
-        schoolSelect.replaceChildren();
+        try {
+            hideSpinner             (schoolGroup);
+            schoolSelect.replaceChildren();
 
-        const schoolErrorOption = createElement("option", [], "Could not load schools");
-        formatElement           (schoolErrorOption, {}, [], { value: "" });
-        insertElement           (schoolSelect, schoolErrorOption);
+            const schoolErrorOption = createElement("option", [], "Could not load schools");
+            formatElement           (schoolErrorOption, {}, [], { value: "" });
+            insertElement           (schoolSelect, schoolErrorOption);
+
+            if (isRequestBlocked(err) && pickerError) {
+                pickerError.textContent = "Unusual amount of requests detected. Functionality is temporarily blocked for 10 minutes.";
+            } else if (pickerError) {
+                pickerError.textContent = "Could not load schools right now.";
+            }
+        } catch {
+            /* no-op */
+        }
     }
 }
 
 /* Loads classes for the selected school into the class select dropdown. */
-async function loadClasses(schoolSelect, classGroup, classSelect) {
+async function loadClasses(schoolSelect, classGroup, classSelect, pickerError) {
     schoolSelect.addEventListener("change", async () => {
         const schoolId          = schoolSelect.value;
         formatElement           (classSelect, {}, [], { disabled: true });
         hideSpinner             (classGroup);
         showSpinner             (classGroup);
+        if (pickerError) pickerError.textContent = "";
 
 
         if (!schoolId) {
@@ -247,6 +265,17 @@ async function loadClasses(schoolSelect, classGroup, classSelect) {
             const classErrorOption = createElement("option", [], "Could not load classes");
             formatElement       (classErrorOption, {}, [], { value: "" });
             insertElement       (classSelect, classErrorOption);
+
+            if (isRequestBlocked(err) && pickerError) {
+                pickerError.textContent = "Unusual amount of requests detected. Functionality is temporarily blocked for 10 minutes.";
+            } else if (pickerError) {
+                pickerError.textContent = "Could not load classes right now.";
+            }
         }
     });
+}
+
+function isRequestBlocked(err) {
+    const message = String(err?.message || "").toLowerCase();
+    return err?.code === "functions/resource-exhausted" || message.includes("too many requests");
 }

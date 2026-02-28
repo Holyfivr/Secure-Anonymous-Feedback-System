@@ -1,7 +1,7 @@
 
 # Integritet och datahantering (SAFS)
 
-Senast uppdaterad: 2026-02-25
+Senast uppdaterad: 2026-02-28
 
 1. **Personuppgiftsansvarig**
     Personuppgiftsansvarig för SAFS är Joel Seger.
@@ -10,7 +10,7 @@ Senast uppdaterad: 2026-02-25
 2. **Vilka personuppgifter behandlas**
     SAFS behandlar:
     - E-postadress för administratörskonton.
-    - Begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + klassidentifierare + tidsstämpel).
+    - Begränsad anti-missbruksmetadata för rate limiting (en hashad, trunkerad representation av anrops-IP + anropskontext/identifierare + tidsstämpel).
     Klartext-IP lagras inte avsiktligt i SAFS datalagring.
 
 3. **Varför e-postadress lagras**
