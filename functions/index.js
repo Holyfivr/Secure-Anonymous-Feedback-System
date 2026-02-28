@@ -6,7 +6,7 @@ const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
-const {getFirestore, FieldValue} = require("firebase-admin/firestore");
+const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 
 initializeApp();
 const db = getFirestore();
@@ -22,6 +22,7 @@ const FEEDBACK_PASSWORD_SCRYPT_PARAMS = {
   keyLen: 32,
   maxmem: 64 * 1024 * 1024,
 };
+const RATE_LIMIT_TTL_MS = 24 * 60 * 60 * 1000;
 
 // --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
 function hashPasswordLegacySha256(password, salt) {
@@ -169,7 +170,7 @@ async function createUserOrThrow(email, password) {
     if (err.code === "auth/invalid-password") {
       throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
     }
-    throw new HttpsError("internal", "Could not create user: " + err.message);
+    throw new HttpsError("internal", "Could not create user. Please try again later.");
   }
 }
 
@@ -361,7 +362,7 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
     await classRef.update(verification.migratedRecord).catch(() => {});
   }
 
-  // Rate limit: per IP per class (60s cooldown)
+  // Rate limit: per IP per class (60s cooldown). Docs are cleaned with Firestore TTL.
   const ip = request.rawRequest?.ip || "unknown";
   const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
   const rateLimitRef = db.collection("rateLimits").doc(`${classId}_${ipHash}`);
@@ -382,8 +383,11 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
     createdAt: FieldValue.serverTimestamp(),
   });
 
-  // Update rate limit timestamp
-  await rateLimitRef.set({lastPostAt: FieldValue.serverTimestamp()});
+  // Update rate limit timestamp + TTL marker (24h)
+  await rateLimitRef.set({
+    lastPostAt: FieldValue.serverTimestamp(),
+    expiresAt: Timestamp.fromMillis(Date.now() + RATE_LIMIT_TTL_MS),
+  });
 
   return {status: "ok"};
 });

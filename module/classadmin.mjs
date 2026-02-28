@@ -51,6 +51,7 @@ async function renderDashboard(schoolId, classId) {
     const resetInput                = createElement("input", ["input-small", "reset-feedback-password"]);
     const resetUserPassword         = createElement("button", [], "Send password reset link", "resetPasswordLink");
     const resetFeedbackPasswordBtn  = createElement("button", ["btn-small"], "Reset");
+    const resetStatus               = createElement("p", ["muted"]);
     const divider                   = createElement ("hr");
     
     insertElement       (wrapper, resetPasswordSection);
@@ -62,9 +63,11 @@ async function renderDashboard(schoolId, classId) {
     insertElement       (resetPasswordSection, resetInput);
     formatElement       (resetFeedbackPasswordBtn, {}, [], { type: "button" });
     insertElement       (resetPasswordSection, resetFeedbackPasswordBtn);
+    formatElement       (resetStatus, {}, [], { id: "reset-feedback-status" });
+    insertElement       (resetPasswordSection, resetStatus);
     
     resetUserPassword.addEventListener("click", resetPassword);
-    enableResetBtn      (resetFeedbackPasswordBtn, resetInput, resetPasswordSection);
+    enableResetBtn      (resetFeedbackPasswordBtn, resetInput);
 
 
     /* MESSAGES SECTION */
@@ -192,25 +195,35 @@ function enableCopyBtn(copyBtn, feedbackUrl) {
 }
 
 /* Enables the reset button functionality to reset the feedback password via Cloud Function and show feedback */
-function enableResetBtn(resetBtn, resetInput, resetPasswordSection) {
+function enableResetBtn(resetBtn, resetInput) {
 
     resetBtn.addEventListener("click", async () => {
         const newPassword       = resetInput.value.trim();
+        const resetStatusEl     = document.getElementById("reset-feedback-status");
         if (!newPassword) {
-            alert               ("Please enter a new feedback password.");
+            if (resetStatusEl) {
+                resetStatusEl.classList.remove("success-color");
+                resetStatusEl.classList.add("error-text");
+                resetStatusEl.textContent = "Please enter a new feedback password.";
+            }
             return;
         }
         try {
             await fn.resetFeedbackPassword({ newFeedbackPassword: newPassword });
-            alert               ("Feedback password reset successfully.");
             resetInput.value    = "";
-            addNewElement       (resetPasswordSection, "br");
-            addNewElement       (resetPasswordSection, "h3", ["success-color"], `New password: ${newPassword}.`);
-            addNewElement       (resetPasswordSection, "h3", ["success-color"], "Share this password with your classmates.");
+            if (resetStatusEl) {
+                resetStatusEl.classList.remove("error-text");
+                resetStatusEl.classList.add("success-color");
+                resetStatusEl.textContent = "Feedback password was successfully updated.";
+            }
 
         } catch (err) {
             console.error       ("Error resetting feedback password:", err);
-            alert               ("Failed to reset feedback password.");
+            if (resetStatusEl) {
+                resetStatusEl.classList.remove("success-color");
+                resetStatusEl.classList.add("error-text");
+                resetStatusEl.textContent = "Failed to reset feedback password.";
+            }
         }
     });
 }

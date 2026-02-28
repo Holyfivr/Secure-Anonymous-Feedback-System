@@ -41,7 +41,7 @@ Senast uppdaterad: 2026-02-25
 8. **Lagringstid**
     - Data för skoladministratörer och feedback lagras så länge som kontot finns.
     - Data för klasser och studentrepresentanter lagras så länge som klassen finns.
-    - Anti-missbruksmetadata för rate limiting lagras i pseudonymiserad form och sparas så länge det behövs för att skydda tjänsten mot missbruk.
+    - Anti-missbruksmetadata för rate limiting lagras i pseudonymiserad form och konfigureras för TTL-rensning efter 24 timmar (faktisk raderingstid beror på Firestores TTL-process).
     - När ett konto tas bort, raderas även all data länkad till kontot.
 
 9. **Rättigheter**
