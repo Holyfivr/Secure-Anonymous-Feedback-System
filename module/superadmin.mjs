@@ -133,7 +133,7 @@ async function loadSchools(container) {
         hideSpinner           (container);
 
         if (snapshot.empty) {
-            const placeholder = addNewElement(container, "p", ["muted"], "No schools yet.");
+            const placeholder = addNewElement(container, "p", [], "No schools yet.");
             formatElement     (placeholder, { fontStyle: "italic" });
             return;
         }
@@ -221,7 +221,7 @@ async function handleViewClasses(schoolId, schoolItem, viewBtn) {
         }));
 
         if (classes.length === 0) {
-            const p = addNewElement(subList, "p", ["muted"], "No classes.");
+            const p = addNewElement(subList, "p", [], "No classes.");
             formatElement(p, { fontStyle: "italic" });
             return;
         }

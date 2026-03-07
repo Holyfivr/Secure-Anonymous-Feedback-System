@@ -148,7 +148,7 @@ async function loadClasses(container, schoolId) {
         counter.textContent = classes.length;
 
         if (classes.length === 0) {
-            const placeholder = addNewElement(container, "p", ["muted"], "No classes yet.");
+            const placeholder = addNewElement(container, "p", [], "No classes yet.");
             formatElement(placeholder, { fontStyle: "italic" });
             return;
         }

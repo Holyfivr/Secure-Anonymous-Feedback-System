@@ -77,7 +77,7 @@ function renderPolicyContent(container, languagePolicy) {
   insertElement(container, title);
 
   const updatedText = `${languagePolicy.lastUpdatedLabel || "Last updated"}: ${languagePolicy.updatedAt || "-"}`;
-  const updatedAt = createElement("p", ["muted"], updatedText);
+  const updatedAt = createElement("p", [], updatedText);
   insertElement(container, updatedAt);
 
   languagePolicy.sections?.forEach((section, index) => {
@@ -109,7 +109,7 @@ function renderPolicyContent(container, languagePolicy) {
 
     languagePolicy.footnotes.forEach((footnote) => {
       const footnoteText = `${footnote.marker} ${footnote.text}`;
-      const note = createElement("p", ["muted"], footnoteText);
+      const note = createElement("p", [], footnoteText);
       insertElement(container, note);
       insertElement(container, createElement("br"));
     });

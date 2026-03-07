@@ -1,10 +1,32 @@
 import { createElement, insertElement, addNewElement, formatElement } from "./dom-helper.mjs";
 import { signOut, auth } from "./firebase-config.mjs";
 const root = document.getElementById("root");
+const landingContentPath = "./docs/landing-page.json";
 
-export function renderLandingPage() {
+export async function renderLandingPage() {
   root.innerHTML = "";
   renderNavBar(root);
+
+  const wrapper = createElement("div", ["page-wrapper"]);
+  const card = createElement("section", ["privacy-card", "landing-card"]);
+  const content = createElement("article", ["landing-content"]);
+
+  insertElement(root, wrapper);
+  insertElement(wrapper, card);
+  insertElement(card, content);
+
+  try {
+    const response = await fetch(landingContentPath);
+    if (!response.ok) {
+      throw new Error(`Could not load ${landingContentPath}`);
+    }
+
+    const landingData = await response.json();
+    renderLandingContent(content, landingData);
+  } catch {
+    addNewElement(content, "h2", ["centered"], "Welcome to SAFS");
+    addNewElement(content, "p", [], "Could not load landing content.");
+  }
 }
 
 const navLinks = [
@@ -61,6 +83,64 @@ export function addDashboardButton(btn) {
   btn.addEventListener("click", () => {
     window.location.hash = "#/login";
   });
+}
+
+function renderLandingContent(container, data) {
+  container.replaceChildren();
+  formatElement(container, {padding: "3vw",})
+
+  addNewElement(container, "h1", ["centered"], data.title);
+
+  if (data.subtitle) {
+    addNewElement(container, "h3", ["centered"], data.subtitle);
+  }
+
+  data.intro?.forEach((paragraph) => {
+    addNewElement(container, "p", [], paragraph);
+  });
+
+  data.sections?.forEach((section) => {
+    const sectionWrap = createElement("section", ["landing-section"]);
+    insertElement(container, sectionWrap);
+    addNewElement(sectionWrap, "h3", [], section.heading);
+
+    section.paragraphs?.forEach((paragraph) => {
+      addNewElement(sectionWrap, "p", [], paragraph);
+    });
+
+    if (section.bullets?.length) {
+      const list = createElement("ul", []);
+      insertElement(sectionWrap, list);
+      section.bullets.forEach((itemText) => {
+        addNewElement(list, "li", [], itemText);
+      });
+    }
+  });
+
+  if (data.contact) {
+    const contactWrap = createElement("section", ["landing-section", "landing-contact"]);
+    insertElement(container, contactWrap);
+    addNewElement(contactWrap, "h3", [], data.contact.heading || "Contact");
+
+    data.contact.paragraphs?.forEach((paragraph) => {
+      addNewElement(contactWrap, "p", [], paragraph);
+    });
+
+    if (data.contact.links?.length) {
+      const links = createElement("div", ["landing-links"]);
+      insertElement(contactWrap, links);
+
+      data.contact.links.forEach((link) => {
+        const anchor = createElement("a", [], link.label || link.href);
+        formatElement(anchor, {}, [], {
+          href: link.href,
+          target: "_blank",
+          rel: "noopener noreferrer",
+        });
+        insertElement(links, anchor);
+      });
+    }
+  }
 }
 
 

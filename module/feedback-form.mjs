@@ -33,7 +33,7 @@ export async function renderFeedbackPage() {
     insertElement               (root, wrapper);
     insertElement               (wrapper, card);
     addNewElement               (card, "h2", [], "Send feedback");
-    addNewElement               (card, "p", ["muted"], "Find your class to send anonymous feedback.");
+    addNewElement               (card, "p", [], "Find your class to send anonymous feedback.");
     insertElement               (card, form);
 
     /* School select */
@@ -90,7 +90,7 @@ export async function renderFeedbackForm(schoolId, classId) {
     insertElement       (root, wrapper);
     insertElement       (wrapper, card);
     insertElement       (card, heading);
-    addNewElement       (card, "p", ["muted"], "Your message is completely anonymous.");
+    addNewElement       (card, "p", [], "Your message is completely anonymous.");
 
     /* Build the form immediately; fetch class name in background */
     insertElement       (card, form);

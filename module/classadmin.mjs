@@ -38,7 +38,7 @@ async function renderDashboard(schoolId, classId) {
 
     insertElement       (wrapper, linkSection);
     addNewElement       (linkSection, "h3", [], "Feedback link");
-    addNewElement       (linkSection, "p", ["muted"], "Share this link with students so they can send anonymous feedback.");
+    addNewElement       (linkSection, "p", [], "Share this link with students so they can send anonymous feedback.");
     insertElement       (linkSection, urlRow);
     addNewElement       (urlRow, "code", ["url-text"], feedbackUrl);
     formatElement       (copyBtn, {}, [], { type: "button" });
@@ -51,7 +51,7 @@ async function renderDashboard(schoolId, classId) {
     const resetInput                = createElement("input", ["input-small", "reset-feedback-password"]);
     const resetUserPassword         = createElement("button", [], "Send password reset link", "resetPasswordLink");
     const resetFeedbackPasswordBtn  = createElement("button", ["btn-small"], "Reset");
-    const resetStatus               = createElement("p", ["muted"]);
+    const resetStatus               = createElement("p");
     const divider                   = createElement ("hr");
     
     insertElement       (wrapper, resetPasswordSection);
@@ -112,7 +112,7 @@ async function loadMessages(container, schoolId, classId) {
 
         if (messages.length === 0) {
 
-            const placeholder = createElement("p", ["muted"], "No messages yet.");
+            const placeholder = createElement("p", [], "No messages yet.");
             insertElement(container, placeholder);
             formatElement(placeholder, { fontStyle: "italic" });
             return;
@@ -143,7 +143,7 @@ function renderMessageCard(container, msg, schoolId, classId) {
     
     insertElement       (container, card);
     insertElement       (card, msgHeader);
-    addNewElement       (msgHeader, "span", ["muted"], timeStr);
+    addNewElement       (msgHeader, "span", [], timeStr);
     formatElement       (deleteBtn, {}, [], { type: "button" });
     insertElement       (msgHeader, deleteBtn);
     enableDeleteBtn     (deleteBtn, msg.id, card, schoolId, classId);
@@ -171,7 +171,7 @@ async function handleDeleteMessage(messageId, card, schoolId, classId) {
 
         if (remaining === 0) {
             const msgList       = document.getElementById("msg-list");
-            const placeholder   = createElement("p", ["muted"], "No messages yet.");
+            const placeholder   = createElement("p", [], "No messages yet.");
             insertElement       (msgList, placeholder);
             formatElement       (placeholder, { fontStyle: "italic" });
         }
