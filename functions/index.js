@@ -22,14 +22,23 @@ const FEEDBACK_PASSWORD_SCRYPT_PARAMS = {
   keyLen: 32,
   maxmem: 64 * 1024 * 1024,
 };
+// TTL marker for anti-abuse documents in Firestore (cleanup target: 24 hours).
 const RATE_LIMIT_TTL_MS = 24 * 60 * 60 * 1000;
+// Sliding window length for feedback password attempt counting.
 const ATTEMPT_WINDOW_MS = 60 * 1000;
+// Maximum feedback post attempts allowed per window before temporary blocking.
 const MAX_ATTEMPTS_PER_WINDOW = 20;
+// Block duration after attempt threshold is exceeded.
 const ATTEMPT_BLOCK_MS = 20 * 60 * 1000;
+// Sliding window length for public picker endpoints (listSchools/listClasses/getClassName).
 const PUBLIC_PICKER_WINDOW_MS = 60 * 1000;
-const PUBLIC_PICKER_MAX_PER_WINDOW = 60;
+// Maximum public picker requests allowed per window before temporary blocking.
+const PUBLIC_PICKER_MAX_PER_WINDOW = 30;
+// Block duration for public picker abuse.
 const PUBLIC_PICKER_BLOCK_MS = 10 * 60 * 1000;
+// Default number of messages returned by listMessages when no explicit limit is provided.
 const LIST_MESSAGES_DEFAULT_LIMIT = 100;
+// Hard upper cap for listMessages limit to avoid large expensive reads.
 const LIST_MESSAGES_MAX_LIMIT = 200;
 
 // --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
