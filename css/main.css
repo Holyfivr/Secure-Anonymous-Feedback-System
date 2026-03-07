@@ -2,20 +2,40 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: var(--page-bg);
     overflow-x: hidden;
 }
 
 :root {
+    --page-bg: #f4f4f4;
     --primary-text: #000000;
     --secondary-text: #ffffff;
     --primary-color: #3a6b67;
     --secondary-color: #ffffff;
     --success-color: #27ae60;
+    --success-color-hover: #219a52;
     --danger-color: #c0392b;
+    --neutral: #f0f0f0;
+    --neutral-hover: #e0e0e0;
+    --success-bg-soft: #eafaf1;
     --shadow-25: rgba(0, 0, 0, 0.25);
     --shadow-50: rgba(0, 0, 0, 0.5);
     --shadow-75: rgba(0, 0, 0, 0.75);
+    --heading-color: var(--primary-color);
+    --body-color: var(--primary-text);
+    --heading-shadow: none;
+}
+
+h2,
+h3 {
+    margin: 0 0 1.5rem;
+    color: var(--heading-color);
+}
+
+p,
+li {
+    color: var(--body-color);
+    line-height: 1.55;
 }
 
 .primary-color {
@@ -24,6 +44,14 @@ html, body {
 
 .success-color {
     color: var(--success-color) !important;
+}
+
+.centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    align-self: center;
 }
 
 /* Base elements */
@@ -69,11 +97,6 @@ input, select, textarea {
     margin-bottom: 2rem;
 
 }
-.card h2 {
-    margin: 0 0 1.5rem;
-    color: var(--primary-color);
-}
-
 .form-group {
     display: flex;
     flex-direction: column;
@@ -154,16 +177,9 @@ nav a:active {
     align-items: center;
     margin-bottom: 1.5rem;
 }
-.dashboard-header h2 {
-    margin: 0;
-    color: var(--primary-color);
-}
 .dashboard-section {
     margin-bottom: 1.5rem;
-}
-.dashboard-section h3 {
-    margin: 0 0 1rem;
-    color: var(--primary-text);
+    --heading-color: var(--primary-text);
 }
 .dashboard-section button {
     margin-top: 1rem;
@@ -176,25 +192,21 @@ nav a:active {
     cursor: pointer;
 }
 .btn-active:hover {
-    background-color: #219a52;
+    background-color: var(--success-color-hover);
 }
 .btn-inactive {
-    background-color: #95a5a6;
+    background-color: var(--neutral);
+    color: var(--primary-text);
     cursor: pointer;
 }
 .btn-inactive:hover {
-    background-color: #7f8c8d;
+    background-color: var(--neutral-hover);
 }
 .item-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-.muted {
-    color: #888;
-    margin: 0;
-}
-
 .success-text {
     color: var(--success-color);
     font-size: 0.9rem;
@@ -203,7 +215,7 @@ nav a:active {
 }
 
 .success-text code {
-    background: #eafaf1;
+    background: var(--success-bg-soft);
     padding: 0.1rem 0.4rem;
     border-radius: 3px;
     font-size: 0.95rem;
@@ -214,7 +226,7 @@ nav a:active {
     justify-content: space-between;
     align-items: center;
     padding: 0.6rem 0.8rem;
-    background: #f9f9f9;
+    background: var(--neutral);
     border-radius: 4px;
 }
 .badge {
@@ -222,7 +234,7 @@ nav a:active {
     padding: 0.2rem 0.6rem;
     border-radius: 3px;
     background: var(--success-color);
-    color: white;
+    color: var(--secondary-text);
     font-weight: bold;
 }
 .badge-inactive {
@@ -248,13 +260,13 @@ textarea {
 .char-counter {
     text-align: right;
     font-size: 0.8rem;
-    color: #888;
+    opacity: 0.75;
     margin-top: 0.3rem;
 }
 
 /* Messages */
 .message-card {
-    background: #f9f9f9;
+    background: var(--neutral);
     border-radius: 4px;
     padding: 0.8rem;
 }
@@ -280,7 +292,7 @@ textarea {
 }
 .url-text {
     flex: 1;
-    background: #f0f0f0;
+    background: var(--neutral);
     padding: 0.5rem;
     border-radius: 4px;
     font-size: 0.85rem;
@@ -305,7 +317,7 @@ textarea {
     justify-content: space-between;
     align-items: center;
     padding: 0.4rem 0.8rem;
-    background: #f0f4f3;
+    background: var(--neutral);
     border-radius: 4px;
     font-size: 0.9rem;
 }
@@ -320,7 +332,7 @@ textarea {
     content: "";
     width: 28px;
     height: 28px;
-    border: 3px solid #e0e0e0;
+    border: 3px solid var(--neutral-hover);
     border-top-color: var(--primary-color);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
@@ -355,6 +367,9 @@ textarea {
   margin-bottom: 5vh;
   margin-top: 2vh;
   font-size: clamp(0.7rem, 1.1vw, 1rem);
+    --heading-color: var(--secondary-color);
+    --body-color: var(--secondary-color);
+    --heading-shadow: 3px 3px 3px var(--primary-text);
 }
 
 .privacy-controls {
@@ -363,21 +378,28 @@ textarea {
   margin-bottom: 1rem;
 }
 
-.privacy-content h2,
-.privacy-content h3 {
-  margin-top: 1rem;
-  color: var(--secondary-color);
-  text-shadow: 3px 3px 3px solid black;
-}
-
-.privacy-content p,
-.privacy-content li {
-  line-height: 1.55;
-}
-
 .privacy-content a {
   color: var(--secondary-color);
   text-decoration: underline;
+}
+
+.landing-card {
+    padding-bottom: 2rem;
+    --heading-color: var(--secondary-color);
+    --body-color: var(--secondary-color);
+}
+
+.landing-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.landing-links a {
+    color: var(--secondary-color);
+    text-decoration: underline;
+    font-weight: 600;
 }
 
 #footer {
