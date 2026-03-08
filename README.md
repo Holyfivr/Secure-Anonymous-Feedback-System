@@ -38,11 +38,20 @@ Current status:
 
 Planned/next:
 
-- Add proper landing page. It is currently blank, since it hasn't been a priority. Safety first.
+- Improve landing page content and onboarding copy for pilot schools.
 - Create a proper design for the frontend. The current UI is very basic and unstyled, but fully functional.
 - Final logistics/onboarding with schools.
 - Support form for assistance with the service.
 - Tune App Check and abuse-throttling thresholds based on real traffic patterns.
+
+### Beta Operations: Admin Email Deliverability
+
+Some school domains may filter or quarantine Firebase Auth password reset emails.
+This is an operational mail policy issue (recipient-side filtering), not a known SAFS authorization bug.
+
+Recommended for beta:
+
+- As a temporary solution, admins will need to use a personal mail for login and password resets. This is not ideal, and we will work on getting a private SMTP relay set up for the service to allow sending from custom domains in the future.
 
 ### Security and Anonymity Model
 
