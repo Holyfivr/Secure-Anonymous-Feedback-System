@@ -46,12 +46,28 @@ li {
     color: var(--success-color) !important;
 }
 
-.centered {
+.centered-row {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
     text-align: center;
     align-self: center;
+}
+
+.centered-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    align-self: center;
+}
+
+.left-aligned {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 /* Base elements */
@@ -369,7 +385,6 @@ textarea {
   font-size: clamp(0.7rem, 1.1vw, 1rem);
     --heading-color: var(--secondary-color);
     --body-color: var(--secondary-color);
-    --heading-shadow: 3px 3px 3px var(--primary-text);
 }
 
 .privacy-controls {
@@ -385,8 +400,14 @@ textarea {
 
 .landing-card {
     padding-bottom: 2rem;
-    --heading-color: var(--secondary-color);
-    --body-color: var(--secondary-color);
+    color: var(--secondary-color);
+    background: var(--primary-color);
+    
+}
+
+.landing-card p {
+    font-size: clamp(0.8rem, 1.2vw, 1rem);
+    margin: 0 auto;
 }
 
 .landing-links {
@@ -400,6 +421,19 @@ textarea {
     color: var(--secondary-color);
     text-decoration: underline;
     font-weight: 600;
+}
+
+.landing-section {
+    margin-bottom: 2rem;
+}
+.info-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--shadow-75);
+    padding: 1rem;
+    width: clamp(220px, 70vw, 700px);
+    margin: 0 auto;
+    margin-top: 1rem;
+
 }
 
 #footer {

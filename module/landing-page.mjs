@@ -87,22 +87,13 @@ export function addDashboardButton(btn) {
 
 function renderLandingContent(container, data) {
   container.replaceChildren();
-  formatElement(container, {padding: "3vw",})
 
-  addNewElement(container, "h1", ["centered"], data.title);
-
-  if (data.subtitle) {
-    addNewElement(container, "h3", ["centered"], data.subtitle);
-  }
-
-  data.intro?.forEach((paragraph) => {
-    addNewElement(container, "p", [], paragraph);
-  });
+  addNewElement(container, "h1", ["centered-column"], data.title);
 
   data.sections?.forEach((section) => {
-    const sectionWrap = createElement("section", ["landing-section"]);
+    const sectionWrap = createElement("section", ["landing-section", "info-card", "centered-column"]);
     insertElement(container, sectionWrap);
-    addNewElement(sectionWrap, "h3", [], section.heading);
+    addNewElement(sectionWrap, "h3", ["centered-row"], section.heading);
 
     section.paragraphs?.forEach((paragraph) => {
       addNewElement(sectionWrap, "p", [], paragraph);
@@ -112,22 +103,22 @@ function renderLandingContent(container, data) {
       const list = createElement("ul", []);
       insertElement(sectionWrap, list);
       section.bullets.forEach((itemText) => {
-        addNewElement(list, "li", [], itemText);
+        addNewElement(list, "li", ["left-aligned"], itemText);
       });
     }
   });
 
   if (data.contact) {
-    const contactWrap = createElement("section", ["landing-section", "landing-contact"]);
+    const contactWrap = createElement("section", ["landing-section", "landing-contact", "info-card"]);
     insertElement(container, contactWrap);
-    addNewElement(contactWrap, "h3", [], data.contact.heading || "Contact");
+    addNewElement(contactWrap, "h3", ["centered-row"], data.contact.heading || "Contact");
 
     data.contact.paragraphs?.forEach((paragraph) => {
-      addNewElement(contactWrap, "p", [], paragraph);
+      addNewElement(contactWrap, "span", ["centered-row"], paragraph);
     });
 
     if (data.contact.links?.length) {
-      const links = createElement("div", ["landing-links"]);
+      const links = createElement("div", ["landing-links", "centered-row"]);
       insertElement(contactWrap, links);
 
       data.contact.links.forEach((link) => {

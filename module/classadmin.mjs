@@ -94,7 +94,7 @@ async function renderDashboard(schoolId, classId) {
         loadMessages(msgList, schoolId, classId),
     ]);
 
-    msgTitle.textContent = `Messages — ${className}`;
+    msgTitle.textContent = `Messages: ${className}`;
 }
 
 /* Loads messages from the server and renders them in the dashboard */

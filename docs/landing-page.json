@@ -1,11 +1,15 @@
 {
-  "title": "Welcome to SAFS",
-  "subtitle": "Secure Anonymous Feedback System",
-  "intro": [
-    "SAFS is a security-focused platform for anonymous student feedback in schools.",
-    "The goal is to make honest feedback safe to share while keeping access strictly controlled."
-  ],
+  "title": "Secure Anonymous Feedback System",
+
   "sections": [
+    {
+      "heading": "What is this?",
+      "paragraphs": [
+        "SAFS is a security-focused platform for anonymous student feedback in schools. ",
+        "The goal is to make honest feedback safe to share while keeping access strictly controlled. ",
+        "SAFS is currently in beta, which means that, while security is high, there are limited features. "
+      ]
+    },
     {
       "heading": "Purpose",
       "paragraphs": [
@@ -16,21 +20,21 @@
     {
       "heading": "How SAFS works",
       "bullets": [
-        "A school account can create class-level representative accounts.",
-        "Each class has a feedback link and a class password for anonymous posting.",
-        "Only authorized class representatives can access class messages."
+        "● A school account can create class-level representative accounts.",
+        "● Each class has a feedback link and a class password for anonymous posting.",
+        "● Only authorized class representatives can access class messages."
       ]
     }
   ],
   "contact": {
     "heading": "Create a school account",
     "paragraphs": [
-      "If you want to create a school account for your organization, contact SAFS through email or GitHub."
+      "If you want to create an account for your organization, contact SAFS through email or GitHub."
     ],
     "links": [
       {
         "label": "Email",
-        "href": "mailto:joelseger87@gmail.com"
+        "href": "mailto:joel.seger@safs.live"
       },
       {
         "label": "GitHub",
