@@ -40,6 +40,25 @@ const PUBLIC_PICKER_BLOCK_MS = 10 * 60 * 1000;
 const LIST_MESSAGES_DEFAULT_LIMIT = 100;
 // Hard upper cap for listMessages limit to avoid large expensive reads.
 const LIST_MESSAGES_MAX_LIMIT = 200;
+// Defensive caps for public listing endpoints.
+const LIST_SCHOOLS_PUBLIC_LIMIT = 100;
+const LIST_CLASSES_PUBLIC_LIMIT = 100;
+
+// Fast in-memory gate to reject obvious bursts before Firestore I/O.
+const QUICK_GATE_WINDOW_MS = 10 * 1000;
+const QUICK_GATE_POST_LIMIT = 10;
+const QUICK_GATE_PICKER_LIMIT = 20;
+const INSTANCE_RATE_GC_INTERVAL_MS = 60 * 1000;
+
+// Cloud Functions scaling caps for controlled beta rollout.
+const MAX_INSTANCES_PUBLIC_PICKER = 2;
+const MAX_INSTANCES_PUBLIC_POST = 3;
+const MAX_INSTANCES_ADMIN = 2;
+const MAX_INSTANCES_CLASSADMIN_READ = 2;
+// Use gen1-like CPU allocation to reduce Cloud Run CPU quota pressure in beta.
+const BETA_CPU_PROFILE = "gcf_gen1";
+const instanceRateMap = new Map();
+let lastInstanceRateCleanupMs = 0;
 
 // --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
 function hashPasswordLegacySha256(password, salt) {
@@ -151,7 +170,16 @@ function encryptText(plaintext, keyHex) {
 }
 
 function decryptText(ciphertext, keyHex) {
-  const [ivHex, authTagHex, encryptedHex] = ciphertext.split(":");
+  if (!ciphertext || typeof ciphertext !== "string") {
+    throw new Error("Invalid ciphertext format");
+  }
+
+  const parts = ciphertext.split(":");
+  if (parts.length !== 3) {
+    throw new Error("Invalid ciphertext format");
+  }
+
+  const [ivHex, authTagHex, encryptedHex] = parts;
   const key = Buffer.from(keyHex, "hex");
   const iv = Buffer.from(ivHex, "hex");
   const authTag = Buffer.from(authTagHex, "hex");
@@ -249,10 +277,77 @@ async function enforcePostAttemptRateLimit(rateLimitRef) {
   }
 }
 
+function maybeCleanupInstanceRateMap(nowMs, windowMs) {
+  if (nowMs - lastInstanceRateCleanupMs < INSTANCE_RATE_GC_INTERVAL_MS) {
+    return;
+  }
+
+  for (const [key, entry] of instanceRateMap.entries()) {
+    if (nowMs - entry.start > windowMs * 2) {
+      instanceRateMap.delete(key);
+    }
+  }
+
+  lastInstanceRateCleanupMs = nowMs;
+}
+
+function quickInstanceLimit(key, limit, windowMs) {
+  const now = Date.now();
+  maybeCleanupInstanceRateMap(now, windowMs);
+
+  const entry = instanceRateMap.get(key);
+  if (!entry) {
+    instanceRateMap.set(key, {count: 1, start: now});
+    return true;
+  }
+
+  if (now - entry.start > windowMs) {
+    entry.count = 1;
+    entry.start = now;
+    return true;
+  }
+
+  entry.count += 1;
+  return entry.count <= limit;
+}
+
+function extractClientIp(rawRequest) {
+  const forwardedForHeader = rawRequest?.headers?.["x-forwarded-for"];
+  const forwardedForValue = Array.isArray(forwardedForHeader) ?
+    forwardedForHeader[0] :
+    forwardedForHeader;
+
+  const forwardedIp = typeof forwardedForValue === "string" ?
+    forwardedForValue.split(",")[0].trim() :
+    "";
+
+  return forwardedIp || rawRequest?.ip || rawRequest?.socket?.remoteAddress || "unknown";
+}
+
+function buildPublicPickerRateLimitKey(request, endpointName) {
+  const ip = extractClientIp(request.rawRequest);
+
+  // Keep key stable across repeated requests from the same client IP.
+  // App Check tokens may rotate and would otherwise bypass rate counting.
+  return crypto.createHash("sha256")
+      .update(`${endpointName}|${ip}`)
+      .digest("hex")
+      .slice(0, 24);
+}
+
+function buildQuickGateKey(request, scope) {
+  const ip = extractClientIp(request.rawRequest);
+  const userAgent = String(request.rawRequest?.headers?.["user-agent"] || "unknown");
+
+  return crypto.createHash("sha256")
+      .update(`${scope}|${ip}|${userAgent}`)
+      .digest("hex")
+      .slice(0, 24);
+}
+
 async function enforcePublicPickerRateLimit(request, endpointName) {
-  const ip = request.rawRequest?.ip || "unknown";
-  const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
-  const docRef = db.collection("rateLimits").doc(`public_${endpointName}_${ipHash}`);
+  const rateLimitKey = buildPublicPickerRateLimitKey(request, endpointName);
+  const docRef = db.collection("rateLimits").doc(`public_${endpointName}_${rateLimitKey}`);
   const now = Date.now();
   const nowTs = Timestamp.fromMillis(now);
   const expiresAt = Timestamp.fromMillis(now + RATE_LIMIT_TTL_MS);
@@ -297,16 +392,29 @@ async function enforcePublicPickerRateLimit(request, endpointName) {
 /* ========================================== */
 // LIST ACTIVE SCHOOLS (public, for picker)
 /* ========================================== */
-exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.listSchools = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_PUBLIC_PICKER}, async (request) => {
+  const quickGateKey = buildQuickGateKey(request, "listSchools");
+  if (!quickInstanceLimit(quickGateKey, QUICK_GATE_PICKER_LIMIT, QUICK_GATE_WINDOW_MS)) {
+    throw new HttpsError("resource-exhausted", "Too many requests. Try again later.");
+  }
+
   await enforcePublicPickerRateLimit(request, "listSchools");
-  const snapshot = await db.collection("schools").where("active", "==", true).get();
+  const snapshot = await db.collection("schools")
+      .where("active", "==", true)
+      .limit(LIST_SCHOOLS_PUBLIC_LIMIT)
+      .get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
 
 /* ========================================== */
 // LIST ACTIVE CLASSES (public, for picker)
 /* ========================================== */
-exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_PUBLIC_PICKER}, async (request) => {
+  const quickGateKey = buildQuickGateKey(request, "listClasses");
+  if (!quickInstanceLimit(quickGateKey, QUICK_GATE_PICKER_LIMIT, QUICK_GATE_WINDOW_MS)) {
+    throw new HttpsError("resource-exhausted", "Too many requests. Try again later.");
+  }
+
   await enforcePublicPickerRateLimit(request, "listClasses");
   const {schoolId} = request.data;
   if (!schoolId) {
@@ -316,14 +424,22 @@ exports.listClasses = onCall({region: "europe-west1", enforceAppCheck: true}, as
   await assertSchoolActive(schoolId);
 
   const snapshot = await db.collection("schools").doc(schoolId)
-      .collection("classes").where("active", "==", true).get();
+      .collection("classes")
+      .where("active", "==", true)
+      .limit(LIST_CLASSES_PUBLIC_LIMIT)
+      .get();
   return snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}));
 });
 
 /* ========================================== */
 // GET CLASS NAME (public, for feedback form)
 /* ========================================== */
-exports.getClassName = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.getClassName = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_PUBLIC_PICKER}, async (request) => {
+  const quickGateKey = buildQuickGateKey(request, "getClassName");
+  if (!quickInstanceLimit(quickGateKey, QUICK_GATE_PICKER_LIMIT, QUICK_GATE_WINDOW_MS)) {
+    throw new HttpsError("resource-exhausted", "Too many requests. Try again later.");
+  }
+
   await enforcePublicPickerRateLimit(request, "getClassName");
   const {schoolId, classId} = request.data;
   if (!schoolId || !classId) {
@@ -343,7 +459,7 @@ exports.getClassName = onCall({region: "europe-west1", enforceAppCheck: true}, a
 /* ========================================== */
 // CREATE SCHOOL (superadmin only)
 /* ========================================== */
-exports.createSchool = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.createSchool = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolName, adminEmail, adminPassword} = request.data;
@@ -391,7 +507,7 @@ exports.createSchool = onCall({region: "europe-west1", enforceAppCheck: true}, a
 /* ========================================== */
 // CREATE CLASS (school admin only)
 /* ========================================== */
-exports.createClass = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.createClass = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -445,7 +561,7 @@ exports.createClass = onCall({region: "europe-west1", enforceAppCheck: true}, as
 /* ========================================== */
 // RESET CLASS POST PASSWORD (class admin only)
 /* ========================================== */
-exports.resetFeedbackPassword = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.resetFeedbackPassword = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   requireRole(request, "classadmin");
   const schoolId = request.auth.token.schoolId;
   const classId = request.auth.token.classId;
@@ -467,11 +583,16 @@ exports.resetFeedbackPassword = onCall({region: "europe-west1", enforceAppCheck:
 /* ========================================== */
 // POST MESSAGE (anonymous, rate-limited)
 /* ========================================== */
-exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_PUBLIC_POST}, async (request) => {
   const {schoolId, classId, text, password} = request.data;
 
   if (!schoolId || !classId || !text || !password) {
     throw new HttpsError("invalid-argument", "Missing fields.");
+  }
+
+  const quickGateKey = buildQuickGateKey(request, `postMessage:${classId}`);
+  if (!quickInstanceLimit(quickGateKey, QUICK_GATE_POST_LIMIT, QUICK_GATE_WINDOW_MS)) {
+    throw new HttpsError("resource-exhausted", "Too many requests");
   }
 
   await assertSchoolActive(schoolId);
@@ -489,7 +610,7 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
   }
 
   // Count all attempts (including wrong passwords) to close brute-force gaps.
-  const ip = request.rawRequest?.ip || "unknown";
+  const ip = extractClientIp(request.rawRequest);
   const ipHash = crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
   const rateLimitRef = db.collection("rateLimits").doc(`${classId}_${ipHash}`);
   await enforcePostAttemptRateLimit(rateLimitRef);
@@ -536,7 +657,7 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
 /* ========================================== */
 // LIST MESSAGES (classadmin only, decrypts)
 /* ========================================== */
-exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_CLASSADMIN_READ}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -598,7 +719,7 @@ exports.listMessages = onCall({secrets: [encryptionKey], region: "europe-west1",
 /* ========================================== */
 // DELETE CLASS (school admin only)
 /* ========================================== */
-exports.deleteClass = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.deleteClass = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   requireRole(request, "schooladmin");
 
   const schoolId = request.auth.token.schoolId;
@@ -641,7 +762,7 @@ exports.deleteClass = onCall({region: "europe-west1", enforceAppCheck: true}, as
 /* ========================================== */
 // DELETE SCHOOL (superadmin only)
 /* ========================================== */
-exports.deleteSchool = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.deleteSchool = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   requireRole(request, "superadmin");
 
   const {schoolId} = request.data;
@@ -695,7 +816,7 @@ exports.deleteSchool = onCall({region: "europe-west1", enforceAppCheck: true}, a
 /* ========================================== */
 // LIST CLASS NAMES (superadmin, for overview)
 /* ========================================== */
-exports.listClassNames = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.listClassNames = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
@@ -726,7 +847,7 @@ exports.listClassNames = onCall({region: "europe-west1", enforceAppCheck: true},
 // - Superadmin: can toggle any school or class
 // - School admin: can toggle own classes only
 /* ========================================== */
-exports.toggleActive = onCall({region: "europe-west1", enforceAppCheck: true}, async (request) => {
+exports.toggleActive = onCall({region: "europe-west1", enforceAppCheck: true, cpu: BETA_CPU_PROFILE, maxInstances: MAX_INSTANCES_ADMIN}, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in.");
   }
