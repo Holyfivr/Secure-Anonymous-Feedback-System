@@ -28,31 +28,6 @@ The roles and permissions are as follows:
 
 The system is designed so school-level admins can manage structure, but cannot read class feedback content.
 
-### Current Development Stage
-
-Current status:
-
-- Core platform is implemented and usable.
-- Security architecture is implemented with encryption, hashing, RBAC, and rate limiting.
-- Privacy policy is in place (English or Swedish).
-
-Planned/next:
-
-- Improve landing page content and onboarding copy for pilot schools.
-- Create a proper design for the frontend. The current UI is very basic and unstyled, but fully functional.
-- Final logistics/onboarding with schools.
-- Support form for assistance with the service.
-- Tune App Check and abuse-throttling thresholds based on real traffic patterns.
-
-### Beta Operations: Admin Email Deliverability
-
-Some school domains may filter or quarantine Firebase Auth password reset emails.
-This is an operational mail policy issue (recipient-side filtering), not a known SAFS authorization bug.
-
-Recommended for beta:
-
-- As a temporary solution, admins will need to use a personal mail for login and password resets. This is not ideal, and we will work on getting a private SMTP relay set up for the service to allow sending from custom domains in the future.
-
 ### Security and Anonymity Model
 
 Security and anonymity are first-class concerns in SAFS:
@@ -87,6 +62,7 @@ Important boundary:
 - English source: [docs/privacy-policy.en.md](docs/privacy-policy.en.md).
 - Swedish source: [docs/privacy-policy.sv.md](docs/privacy-policy.sv.md).
 - SAFS stores minimal personal data (administrator emails) and limited anti-abuse metadata for rate limiting (hashed IP-based key + timestamp, TTL cleanup target: 24 hours).
+- All processing is based on legitimate interest (Art. 6.1f GDPR). The privacy policy documents legal basis, user rights (Art. 15–21), third-country transfers, and the right to lodge complaints with IMY.
 
 ### Notes
 
@@ -95,7 +71,8 @@ Important boundary:
 
 ### Legal and Ethical Considerations
 
-- SAFS aims to align with GDPR principles and similar data protection laws by minimizing personal data and providing user rights.
+- SAFS documents legal basis for processing, user rights, third-country transfers, and supervisory authority in its privacy policy, in accordance with GDPR.
+- No automated decision-making or profiling is performed.
 - Users should be aware of the limitations of anonymity and avoid sharing personally identifiable information in feedback messages or class names, as this data may be stored and is not the intended use of those fields.
   
 ### License
