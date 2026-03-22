@@ -5,7 +5,7 @@
       "buttonLabel": "English",
       "title": "Privacy and Data Handling (SAFS)",
       "lastUpdatedLabel": "Last updated",
-      "updatedAt": "2026-02-28",
+      "updatedAt": "2026-03-22",
       "loadError": "Could not load privacy policy.",
       "sections": [
         {
@@ -39,9 +39,16 @@
           ]
         },
         {
+          "heading": "Legal basis for processing",
+          "paragraphs": [
+            "The processing of email addresses is based on legitimate interest (Art. 6.1f GDPR). The legitimate interest is to provide the service by creating and managing administrator accounts. Without an email address, the service cannot function.",
+            "The processing of anti-abuse metadata (hashed IP data) is based on legitimate interest (Art. 6.1f GDPR). The legitimate interest is to protect the service and its users against abuse, spam, and attacks."
+          ]
+        },
+        {
           "heading": "Other data in the service",
           "paragraphs": [
-            "SAFS also stores schools, classes, and feedback content for the system to function.",
+            "SAFS also stores names of schools, classes, and feedback content for the system to function.",
             "This data is generally not personal data by itself, but it may become personal data if someone enters identifying information in free text."
           ]
         },
@@ -62,6 +69,13 @@
           ]
         },
         {
+          "heading": "Third-country transfers",
+          "paragraphs": [
+            "SAFS uses Google Firebase and Google Cloud, which may process data outside the EU/EEA. Google applies the European Commission's Standard Contractual Clauses (SCCs) and other appropriate safeguards to ensure that transferred data is protected in accordance with GDPR.",
+            "More information can be found in Google's data processing terms."
+          ]
+        },
+        {
           "heading": "Retention",
           "bullets": [
             "Data for school administrators and feedback is stored as long as the account exists.",
@@ -73,9 +87,25 @@
         {
           "heading": "Rights",
           "paragraphs": [
-            "Under applicable law, you have the right to request access to your personal data, and to request correction or deletion.",
-            "Since SAFS does not intentionally* store personal data beyond email addresses, the amount of data that can be disclosed is limited.",
-            "However, an email address can be deleted on request, together with all data linked to that account."
+            "Under the GDPR, you have the right to:"
+          ],
+          "bullets": [
+            "Request access to your personal data (Art. 15).",
+            "Request correction of inaccurate data (Art. 16).",
+            "Request deletion of your data (Art. 17).",
+            "Request restriction of processing (Art. 18).",
+            "Object to processing (Art. 21).",
+            "Request data portability (Art. 20)."
+          ],
+          "additionalParagraphs": [
+            "Since SAFS does not intentionally* store personal data beyond email addresses, the amount of data that can be disclosed is limited. However, an email address can be deleted on request, together with all data linked to that account.",
+            "You also have the right to lodge a complaint with the Swedish Authority for Privacy Protection (IMY), which is the supervisory authority in Sweden. More information is available at imy.se."
+          ]
+        },
+        {
+          "heading": "Automated decision-making",
+          "paragraphs": [
+            "SAFS does not use automated decision-making or profiling within the meaning of Art. 22 GDPR."
           ]
         },
         {
@@ -101,7 +131,7 @@
       "buttonLabel": "Svenska",
       "title": "Integritet och datahantering (SAFS)",
       "lastUpdatedLabel": "Senast uppdaterad",
-      "updatedAt": "2026-02-28",
+      "updatedAt": "2026-03-22",
       "loadError": "Kunde inte ladda integritetspolicyn.",
       "sections": [
         {
@@ -135,9 +165,16 @@
           ]
         },
         {
+          "heading": "Rättslig grund för behandling",
+          "paragraphs": [
+            "Behandlingen av e-postadresser sker med stöd av berättigat intresse (Art. 6.1f GDPR). Det berättigade intresset är att kunna tillhandahålla tjänsten genom att skapa och hantera administratörskonton. Utan e-postadress kan tjänsten inte fungera.",
+            "Behandlingen av anti-missbruksmetadata (hashad IP-data) sker med stöd av berättigat intresse (Art. 6.1f GDPR). Det berättigade intresset är att skydda tjänsten och dess användare mot missbruk, spam och attacker."
+          ]
+        },
+        {
           "heading": "Övrig data i tjänsten",
           "paragraphs": [
-            "SAFS lagrar även skolor, klasser och feedbackinnehåll för att systemet ska fungera.",
+            "SAFS lagrar även namn på skolor, klasser och feedbackinnehåll för att systemet ska fungera.",
             "Denna data är normalt inte personuppgifter i sig, men kan bli det om någon skriver in identifierande information i fritext."
           ]
         },
@@ -158,6 +195,13 @@
           ]
         },
         {
+          "heading": "Överföring till tredje land",
+          "paragraphs": [
+            "SAFS använder Google Firebase och Google Cloud, som kan komma att behandla data utanför EU/EES. Google tillämpar EU-kommissionens standardavtalsklausuler (SCC) samt andra lämpliga skyddsåtgärder för att säkerställa att överförd data skyddas i enlighet med GDPR.",
+            "Mer information finns i Googles databehandlingsvillkor."
+          ]
+        },
+        {
           "heading": "Lagringstid",
           "bullets": [
             "Data för skoladministratörer och feedback lagras så länge som kontot finns.",
@@ -169,9 +213,25 @@
         {
           "heading": "Rättigheter",
           "paragraphs": [
-            "Enligt lag har du rätt att begära ut dina personuppgifter, få dem rättade eller borttagna.",
-            "Eftersom SAFS inte avsiktligt* lagrar några personuppgifter utöver e-postadresser är mängden data som kan lämnas ut begränsad.",
-            "Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot."
+            "Enligt GDPR har du rätt att:"
+          ],
+          "bullets": [
+            "Begära tillgång till dina personuppgifter (Art. 15).",
+            "Begära rättelse av felaktiga uppgifter (Art. 16).",
+            "Begära radering av dina uppgifter (Art. 17).",
+            "Begära begränsning av behandlingen (Art. 18).",
+            "Invända mot behandlingen (Art. 21).",
+            "Begära dataportabilitet (Art. 20)."
+          ],
+          "additionalParagraphs": [
+            "Eftersom SAFS inte avsiktligt* lagrar några personuppgifter utöver e-postadresser är mängden data som kan lämnas ut begränsad. Det går dock att radera en e-postadress på begäran, tillsammans med all data kopplad till det kontot.",
+            "Du har även rätt att lämna in ett klagomål till Integritetsskyddsmyndigheten (IMY), som är tillsynsmyndighet i Sverige. Mer information finns på imy.se."
+          ]
+        },
+        {
+          "heading": "Automatiserat beslutsfattande",
+          "paragraphs": [
+            "SAFS använder inte automatiserat beslutsfattande eller profilering i den mening som avses i Art. 22 GDPR."
           ]
         },
         {

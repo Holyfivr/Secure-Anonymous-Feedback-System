@@ -101,6 +101,11 @@ function renderPolicyContent(container, languagePolicy) {
         insertElement(list, item);
       });
     }
+
+    section.additionalParagraphs?.forEach((paragraph) => {
+      const paragraphEl = createElement("p", [], paragraph);
+      insertElement(sectionWrap, paragraphEl);
+    });
   });
 
   if (languagePolicy.footnotes?.length) {
