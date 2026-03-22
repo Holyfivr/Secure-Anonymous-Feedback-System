@@ -627,28 +627,30 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
     await classRef.update(verification.migratedRecord).catch(() => {});
   }
 
-  // Rate limit: per IP per class (60s cooldown after successful posting).
-  const rateLimitDoc = await rateLimitRef.get();
-
-  if (rateLimitDoc.exists) {
-    const lastTime = rateLimitDoc.data().lastPostAt?.toMillis() || 0;
-    if (Date.now() - lastTime < 60000) {
-      throw new HttpsError("resource-exhausted", "Wait 1 minute between messages.");
-    }
-  }
-
-  // Encrypt and write message
+  // Atomic cooldown check + message write to prevent race conditions.
   const encryptedText = encryptText(text, encryptionKey.value());
-  const messagesRef = classRef.collection("messages");
-  await messagesRef.add({
-    text: encryptedText,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  await db.runTransaction(async (tx) => {
+    const rateLimitDoc = await tx.get(rateLimitRef);
 
-  // Update rate limit timestamp + TTL marker (24h)
-  await rateLimitRef.set({
-    lastPostAt: FieldValue.serverTimestamp(),
-    expiresAt: Timestamp.fromMillis(Date.now() + RATE_LIMIT_TTL_MS),
+    if (rateLimitDoc.exists) {
+      const lastTime = rateLimitDoc.data().lastPostAt?.toMillis() || 0;
+      if (Date.now() - lastTime < 60000) {
+        throw new HttpsError("resource-exhausted", "Wait 1 minute between messages.");
+      }
+    }
+
+    const messagesRef = classRef.collection("messages");
+    const newMsgRef = messagesRef.doc();
+    tx.create(newMsgRef, {
+      text: encryptedText,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    // Merge to preserve existing rate limit fields (attemptCount, blockedUntil, etc.)
+    tx.set(rateLimitRef, {
+      lastPostAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromMillis(Date.now() + RATE_LIMIT_TTL_MS),
+    }, {merge: true});
   });
 
   return {status: "ok"};
