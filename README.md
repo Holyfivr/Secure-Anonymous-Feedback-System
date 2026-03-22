@@ -36,7 +36,7 @@ Security and anonymity are first-class concerns in SAFS:
 - `Role-based access control` via Firebase Auth custom claims (`superadmin`, `schooladmin`, `classadmin`).
 - `Firestore security rules` enforce data boundaries at database level.
 - `Message confidentiality` with AES-256-GCM encryption in Cloud Functions using Secret Manager (`ENCRYPTION_KEY`).
-- `Password protection` for class feedback password with salted `scrypt` hashes (legacy salted SHA-256 auto-migrated on successful verification).
+- `Password protection` for class feedback password with salted `scrypt` hashes
 - `Rate limiting` on feedback posting attempts and public picker endpoints (with temporary block windows and TTL cleanup of anti-abuse metadata).
 - `App Check enforcement` on all callable Cloud Functions (reCAPTCHA Enterprise provider).
 - `XSS hardening` through escaped output and safe DOM text insertion patterns.

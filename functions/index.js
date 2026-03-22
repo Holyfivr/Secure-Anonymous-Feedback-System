@@ -60,11 +60,6 @@ const BETA_CPU_PROFILE = "gcf_gen1";
 const instanceRateMap = new Map();
 let lastInstanceRateCleanupMs = 0;
 
-// --- Helper: legacy salted SHA-256 (kept for backwards compatibility) ---
-function hashPasswordLegacySha256(password, salt) {
-  return crypto.createHash("sha256").update(salt + password).digest("hex");
-}
-
 function generateSalt() {
   return crypto.randomBytes(16).toString("hex");
 }
@@ -143,16 +138,7 @@ async function verifyFeedbackPassword(classData, password) {
     return {ok: timingSafeHexEqual(computed, classData.feedbackPasswordHash)};
   }
 
-  // Legacy format: salted SHA-256 (or unsalted when salt is missing)
-  const legacySalt = classData.feedbackPasswordSalt || "";
-  const legacyHash = hashPasswordLegacySha256(password, legacySalt);
-  const isValidLegacy = timingSafeHexEqual(legacyHash, classData.feedbackPasswordHash);
-
-  if (!isValidLegacy) return {ok: false};
-
-  // Seamless upgrade path: migrate legacy hash to scrypt on successful verification
-  const migratedRecord = await createFeedbackPasswordRecord(password);
-  return {ok: true, migratedRecord};
+  return {ok: false};
 }
 
 // --- Helper: AES-256-GCM encryption ---
@@ -620,11 +606,6 @@ exports.postMessage = onCall({secrets: [encryptionKey], region: "europe-west1", 
   const verification = await verifyFeedbackPassword(classData, password);
   if (!verification.ok) {
     throw new HttpsError("permission-denied", "Wrong password.");
-  }
-
-  if (verification.migratedRecord) {
-    // Best-effort legacy hash migration to scrypt without impacting user flow.
-    await classRef.update(verification.migratedRecord).catch(() => {});
   }
 
   // Atomic cooldown check + message write to prevent race conditions.
