@@ -1,6 +1,7 @@
 import { initializeApp } 
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+         sendPasswordResetEmail, verifyPasswordResetCode, confirmPasswordReset }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
@@ -62,6 +63,7 @@ export function escapeHtml(str) {
 // Re-export what the app needs
 export {
     signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
+    verifyPasswordResetCode, confirmPasswordReset,
     httpsCallable,
     collection, getDocs, query, doc, getDoc, deleteDoc, where,
 };
